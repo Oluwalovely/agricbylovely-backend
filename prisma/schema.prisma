@@ -1,0 +1,273 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────
+// FARMER
+// The person using the app
+// ─────────────────────────────────────────
+model Farmer {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  password     String   // bcrypt hashed — never store plain text
+  firstName    String
+  lastName     String
+  phone        String?  // optional — used for SMS alerts
+  farmName     String
+  farmSizeHa   Float?   // farm size in hectares
+  soilType     SoilType @default(LOAMY)
+  latitude     Float?   // farm location — used for weather lookup
+  longitude    Float?
+  state        String?  // e.g. Ogun, Lagos
+  country      String   @default("Nigeria")
+  avatarUrl    String?  // profile photo from Cloudinary
+  refreshToken String?  // stored to validate refresh token requests
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  fields        Field[]
+  farmerCrops   FarmerCrop[]
+  notifications Notification[]
+  emailLogs     EmailLog[]
+  jobs          Job[]
+
+  @@map("farmers") // maps to "farmers" table in the database
+}
+
+// ─────────────────────────────────────────
+// FIELD
+// A named plot of land owned by a farmer
+// e.g. "Field A", "North Plot"
+// ─────────────────────────────────────────
+model Field {
+  id         String   @id @default(uuid())
+  name       String   // e.g. "Field A"
+  sizeHa     Float?   // size of this specific field
+  soilType   SoilType @default(LOAMY)
+  latitude   Float?
+  longitude  Float?
+  notes      String?  // any extra info the farmer wants to add
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  // Relations
+  farmerId    String
+  farmer      Farmer       @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+  farmerCrops FarmerCrop[] // crops planted in this field
+
+  @@map("fields")
+}
+
+// ─────────────────────────────────────────
+// CROP
+// The master encyclopedia of all crops, plants and flowers
+// Seeded once — farmers browse and pick from this list
+// ─────────────────────────────────────────
+model Crop {
+  id               String       @id @default(uuid())
+  name             String       @unique // common name e.g. "Maize"
+  botanicalName    String?      // e.g. "Zea mays"
+  category         CropCategory // VEGETABLE, GRAIN, FRUIT, FLOWER, HERB, TUBER
+  description      String?      // general growing guide
+  imageUrl         String?      // photo of the crop
+
+  // Growing details
+  daysToHarvest    Int?         // average days from planting to harvest
+  plantingDepthCm  Float?       // how deep to plant the seed
+  spacingCm        Float?       // distance between plants
+  waterNeedsMm     Int?         // water needed per week in mm
+  sunlight         Sunlight     @default(FULL_SUN)
+  climateZone      String?      // e.g. "Tropical", "Semi-arid"
+  soilTypes        SoilType[]   // which soil types this crop grows well in
+  companionPlants  String[]     // names of crops that grow well alongside this one
+  pestsAndDiseases String[]     // common threats to watch for
+
+  // Planting season (month numbers 1–12)
+  plantingMonths   Int[]        // e.g. [3, 4, 9, 10] = March, April, Sept, Oct
+  harvestMonths    Int[]        // expected harvest months
+
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  // Relations
+  farmerCrops FarmerCrop[]
+
+  @@map("crops")
+}
+
+// ─────────────────────────────────────────
+// FARMER CROP
+// Links a farmer to a crop they are actively growing
+// Tracks the real planting date and growth stage
+// ─────────────────────────────────────────
+model FarmerCrop {
+  id            String      @id @default(uuid())
+  plantedAt     DateTime    // the actual date the farmer planted this crop
+  expectedHarvestAt DateTime? // calculated from plantedAt + crop.daysToHarvest
+  harvestedAt   DateTime?   // set when farmer marks it as harvested
+  stage         GrowthStage @default(GERMINATING)
+  notes         String?     // farmer's own notes on this crop
+  quantity      Float?      // amount planted e.g. 2 bags of seed
+  yieldKg       Float?      // recorded yield after harvest
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  // Relations
+  farmerId String
+  farmer   Farmer @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+  cropId   String
+  crop     Crop   @relation(fields: [cropId], references: [id])
+  fieldId  String?
+  field    Field? @relation(fields: [fieldId], references: [id])
+
+  @@map("farmer_crops")
+}
+
+// ─────────────────────────────────────────
+// WEATHER SNAPSHOT
+// Cached weather data per location
+// We save it so we don't call OpenWeatherMap every single request
+// ─────────────────────────────────────────
+model WeatherSnapshot {
+  id        String   @id @default(uuid())
+  latitude  Float
+  longitude Float
+  data      Json     // full API response stored as JSON
+  fetchedAt DateTime @default(now()) // used to check if cache is still fresh (< 1 hour)
+
+  @@unique([latitude, longitude]) // one snapshot per location
+  @@map("weather_snapshots")
+}
+
+// ─────────────────────────────────────────
+// NOTIFICATION
+// In-app alerts shown to the farmer
+// e.g. "Heavy rain expected Saturday"
+// ─────────────────────────────────────────
+model Notification {
+  id        String           @id @default(uuid())
+  type      NotificationType // WEATHER, PEST, PLANTING, HARVEST, SYSTEM
+  title     String
+  message   String
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  // Relations
+  farmerId String
+  farmer   Farmer @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+}
+
+// ─────────────────────────────────────────
+// JOB
+// Background tasks that run on a schedule
+// Replaces Redis/BullMQ — jobs are stored here and processed by node-cron
+// ─────────────────────────────────────────
+model Job {
+  id          String    @id @default(uuid())
+  type        JobType   // WEATHER_ALERT, HARVEST_REMINDER, WEEKLY_DIGEST
+  payload     Json      // data the job needs e.g. { farmerId, cropId }
+  status      JobStatus @default(PENDING)
+  runAt       DateTime  // when this job should be executed
+  retryCount  Int       @default(0) // how many times it has been retried
+  maxRetries  Int       @default(3)
+  error       String?   // last error message if it failed
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  // Relations — optional, not all jobs belong to one farmer
+  farmerId String?
+  farmer   Farmer? @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+
+  @@map("jobs")
+}
+
+// ─────────────────────────────────────────
+// EMAIL LOG
+// Tracks every email we send
+// Useful for debugging and avoiding duplicate sends
+// ─────────────────────────────────────────
+model EmailLog {
+  id        String   @id @default(uuid())
+  to        String   // recipient email address
+  subject   String
+  template  String   // which email template was used e.g. "welcome", "weather-alert"
+  status    String   @default("sent") // sent | failed
+  error     String?  // error message if sending failed
+  sentAt    DateTime @default(now())
+
+  // Relations
+  farmerId String?
+  farmer   Farmer? @relation(fields: [farmerId], references: [id], onDelete: SetNull)
+
+  @@map("email_logs")
+}
+
+// ─────────────────────────────────────────
+// ENUMS
+// Fixed list of allowed values for certain fields
+// ─────────────────────────────────────────
+
+enum SoilType {
+  CLAY
+  SANDY
+  LOAMY
+  SILTY
+  PEATY
+  CHALKY
+}
+
+enum CropCategory {
+  VEGETABLE
+  GRAIN
+  FRUIT
+  FLOWER
+  HERB
+  TUBER
+  LEGUME
+}
+
+enum Sunlight {
+  FULL_SUN       // needs 6+ hours of direct sunlight
+  PARTIAL_SUN    // needs 3–6 hours
+  FULL_SHADE     // grows best without direct sun
+}
+
+enum GrowthStage {
+  GERMINATING    // seed just planted, sprouting
+  SEEDLING       // small plant, first leaves
+  GROWING        // actively growing
+  FLOWERING      // producing flowers
+  MATURING       // fruit/grain forming
+  READY          // ready to harvest
+  HARVESTED      // farmer has harvested it
+}
+
+enum NotificationType {
+  WEATHER        // rain, storm, heat alerts
+  PEST           // pest or disease risk
+  PLANTING       // best time to plant reminders
+  HARVEST        // harvest countdown reminders
+  SYSTEM         // general app notifications
+}
+
+enum JobType {
+  WEATHER_ALERT      // check weather and alert farmers if dangerous
+  HARVEST_REMINDER   // remind farmer harvest is coming soon
+  WEEKLY_DIGEST      // weekly email summary every Monday
+  PEST_ALERT         // pest risk based on weather conditions
+}
+
+enum JobStatus {
+  PENDING     // waiting to run
+  RUNNING     // currently being processed
+  DONE        // completed successfully
+  FAILED      // failed after max retries
+}
