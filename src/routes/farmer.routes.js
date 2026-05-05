@@ -6,8 +6,6 @@ import { updateProfileSchema, changePasswordSchema } from '../utils/validators.j
 
 const router = Router()
 
-// All farmer routes are protected — farmer must be logged in
-// authenticate middleware runs first on every route below
 router.use(authenticate)
 
 router.get('/',           getProfile)                                      // GET  /api/farmers/me

@@ -15,12 +15,11 @@ const authLimiter = rateLimit({
   message: { success: false, message: 'Too many attempts, please try again later.' },
 })
 
-// Public routes — no token needed
 router.post('/register', authLimiter, validate(registerSchema), register)
 router.post('/login',    authLimiter, validate(loginSchema),    login)
 router.post('/refresh',  refresh)
 
-// Protected route — token required to logout
+
 router.post('/logout', authenticate, logout)
 
 export default router

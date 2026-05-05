@@ -17,7 +17,7 @@ app.use(helmet())
 // Only allow requests from our frontend URL
 app.use(cors({
   origin: env.CLIENT_URL,
-  credentials: true, // allows cookies and auth headers
+  credentials: true, 
 }))
 
 // ── Global rate limiter ──────────────────

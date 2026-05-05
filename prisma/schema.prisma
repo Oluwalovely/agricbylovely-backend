@@ -7,10 +7,8 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ─────────────────────────────────────────
 // FARMER
-// The person using the app
-// ─────────────────────────────────────────
+
 model Farmer {
   id           String   @id @default(uuid())
   email        String   @unique
@@ -40,11 +38,8 @@ model Farmer {
   @@map("farmers") // maps to "farmers" table in the database
 }
 
-// ─────────────────────────────────────────
 // FIELD
-// A named plot of land owned by a farmer
-// e.g. "Field A", "North Plot"
-// ─────────────────────────────────────────
+
 model Field {
   id         String   @id @default(uuid())
   name       String   // e.g. "Field A"
@@ -64,11 +59,9 @@ model Field {
   @@map("fields")
 }
 
-// ─────────────────────────────────────────
 // CROP
 // The master encyclopedia of all crops, plants and flowers
-// Seeded once — farmers browse and pick from this list
-// ─────────────────────────────────────────
+
 model Crop {
   id               String       @id @default(uuid())
   name             String       @unique // common name e.g. "Maize"
@@ -101,11 +94,10 @@ model Crop {
   @@map("crops")
 }
 
-// ─────────────────────────────────────────
 // FARMER CROP
 // Links a farmer to a crop they are actively growing
 // Tracks the real planting date and growth stage
-// ─────────────────────────────────────────
+
 model FarmerCrop {
   id            String      @id @default(uuid())
   plantedAt     DateTime    // the actual date the farmer planted this crop
@@ -129,11 +121,10 @@ model FarmerCrop {
   @@map("farmer_crops")
 }
 
-// ─────────────────────────────────────────
 // WEATHER SNAPSHOT
 // Cached weather data per location
 // We save it so we don't call OpenWeatherMap every single request
-// ─────────────────────────────────────────
+
 model WeatherSnapshot {
   id        String   @id @default(uuid())
   latitude  Float
@@ -145,11 +136,8 @@ model WeatherSnapshot {
   @@map("weather_snapshots")
 }
 
-// ─────────────────────────────────────────
 // NOTIFICATION
-// In-app alerts shown to the farmer
-// e.g. "Heavy rain expected Saturday"
-// ─────────────────────────────────────────
+
 model Notification {
   id        String           @id @default(uuid())
   type      NotificationType // WEATHER, PEST, PLANTING, HARVEST, SYSTEM
@@ -165,11 +153,9 @@ model Notification {
   @@map("notifications")
 }
 
-// ─────────────────────────────────────────
 // JOB
 // Background tasks that run on a schedule
-// Replaces Redis/BullMQ — jobs are stored here and processed by node-cron
-// ─────────────────────────────────────────
+
 model Job {
   id          String    @id @default(uuid())
   type        JobType   // WEATHER_ALERT, HARVEST_REMINDER, WEEKLY_DIGEST
@@ -189,11 +175,9 @@ model Job {
   @@map("jobs")
 }
 
-// ─────────────────────────────────────────
 // EMAIL LOG
 // Tracks every email we send
-// Useful for debugging and avoiding duplicate sends
-// ─────────────────────────────────────────
+
 model EmailLog {
   id        String   @id @default(uuid())
   to        String   // recipient email address
@@ -210,10 +194,10 @@ model EmailLog {
   @@map("email_logs")
 }
 
-// ─────────────────────────────────────────
+
 // ENUMS
 // Fixed list of allowed values for certain fields
-// ─────────────────────────────────────────
+
 
 enum SoilType {
   CLAY

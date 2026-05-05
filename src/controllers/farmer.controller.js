@@ -1,11 +1,6 @@
 import prisma from '../config/prisma.js'
 import { success, fail } from '../utils/response.js'
 
-// ─────────────────────────────────────────
-// GET MY PROFILE
-// GET /api/farmers/me
-// Returns the logged-in farmer's full profile
-// ─────────────────────────────────────────
 const getProfile = async (req, res, next) => {
     try {
         const farmer = await prisma.farmer.findUnique({
@@ -45,11 +40,7 @@ const getProfile = async (req, res, next) => {
     }
 }
 
-// ─────────────────────────────────────────
-// UPDATE MY PROFILE
-// PUT /api/farmers/me
-// Farmer can update their own details
-// ─────────────────────────────────────────
+
 const updateProfile = async (req, res, next) => {
     try {
         const {
@@ -104,27 +95,24 @@ const updateProfile = async (req, res, next) => {
     }
 }
 
-// ─────────────────────────────────────────
-// CHANGE PASSWORD
-// PUT /api/farmers/me/password
-// ─────────────────────────────────────────
+
 const changePassword = async (req, res, next) => {
     try {
         const { currentPassword, newPassword } = req.body
 
-        // Get farmer with password from database
+        
         const farmer = await prisma.farmer.findUnique({
             where: { id: req.farmer.id },
         })
 
-        // Verify current password is correct
+        
         const bcrypt = await import('bcryptjs')
         const isMatch = await bcrypt.default.compare(currentPassword, farmer.password)
         if (!isMatch) {
             return res.status(400).json(fail('Current password is incorrect'))
         }
 
-        // Hash the new password
+        
         const hashedPassword = await bcrypt.default.hash(newPassword, 12)
 
         await prisma.farmer.update({
@@ -138,11 +126,7 @@ const changePassword = async (req, res, next) => {
     }
 }
 
-// ─────────────────────────────────────────
-// DELETE ACCOUNT
-// DELETE /api/farmers/me
-// Permanently deletes the farmer's account
-// ─────────────────────────────────────────
+
 const deleteAccount = async (req, res, next) => {
     try {
         await prisma.farmer.delete({

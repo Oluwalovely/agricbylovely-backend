@@ -4,19 +4,16 @@ import prisma from '../config/prisma.js'
 import { env } from '../config/env.js'
 import { success, fail } from '../utils/response.js'
 
-// ─────────────────────────────────────────
-// HELPER — generate both tokens for a farmer
-// Called after register and login
-// ─────────────────────────────────────────
+
 const generateTokens = (farmerId) => {
-    // Access token — short lived, used for every API request
+    
     const accessToken = jwt.sign(
         { farmerId },
         env.JWT_SECRET,
         { expiresIn: env.JWT_EXPIRES_IN } // 15 minutes
     )
 
-    // Refresh token — long lived, used only to get a new access token
+    
     const refreshToken = jwt.sign(
         { farmerId },
         env.JWT_REFRESH_SECRET,
@@ -26,11 +23,7 @@ const generateTokens = (farmerId) => {
     return { accessToken, refreshToken }
 }
 
-// ─────────────────────────────────────────
-// REGISTER
-// POST /api/auth/register
-// Creates a new farmer account
-// ─────────────────────────────────────────
+
 export const register = async (req, res, next) => {
     try {
         const {
@@ -47,13 +40,13 @@ export const register = async (req, res, next) => {
             state,
         } = req.body
 
-        // Check if email is already taken
+        
         const existing = await prisma.farmer.findUnique({ where: { email } })
         if (existing) {
             return res.status(409).json(fail('An account with this email already exists'))
         }
 
-        // Hash the password — never store plain text passwords
+        
         const hashedPassword = await bcrypt.hash(password, 12)
 
         // Create the farmer in the database
@@ -71,7 +64,7 @@ export const register = async (req, res, next) => {
                 longitude: longitude ? parseFloat(longitude) : null,
                 state,
             },
-            // Only return safe fields — never return the password
+            
             select: {
                 id: true,
                 email: true,
@@ -83,7 +76,7 @@ export const register = async (req, res, next) => {
             },
         })
 
-        // Generate tokens for the new farmer
+        
         const { accessToken, refreshToken } = generateTokens(farmer.id)
 
         // Save refresh token to database so we can validate it later
@@ -96,19 +89,16 @@ export const register = async (req, res, next) => {
             success({ farmer, accessToken, refreshToken }, 'Account created successfully')
         )
     } catch (err) {
-        next(err) // passes error to the global error handler
+        next(err) 
     }
 }
 
-// ─────────────────────────────────────────
-// LOGIN
-// POST /api/auth/login
-// ─────────────────────────────────────────
+
 export const login = async (req, res, next) => {
     try {
         const { email, password } = req.body
 
-        // Find farmer by email
+        
         const farmer = await prisma.farmer.findUnique({ where: { email } })
         if (!farmer) {
             return res.status(401).json(fail('Invalid email or password'))
@@ -138,11 +128,7 @@ export const login = async (req, res, next) => {
     }
 }
 
-// ─────────────────────────────────────────
-// REFRESH TOKEN
-// POST /api/auth/refresh
-// Issues a new access token using the refresh token
-// ─────────────────────────────────────────
+
 export const refresh = async (req, res, next) => {
     try {
         const { refreshToken } = req.body
@@ -179,14 +165,9 @@ export const refresh = async (req, res, next) => {
     }
 }
 
-// ─────────────────────────────────────────
-// LOGOUT
-// POST /api/auth/logout
-// Clears the refresh token from the database
-// ─────────────────────────────────────────
+
 export const logout = async (req, res, next) => {
     try {
-        // req.farmer is set by the auth middleware
         await prisma.farmer.update({
             where: { id: req.farmer.id },
             data: { refreshToken: null },

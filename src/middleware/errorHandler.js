@@ -1,8 +1,3 @@
-// ─────────────────────────────────────────
-// CUSTOM ERROR CLASS
-// Use this to throw errors with a specific status code
-// e.g. throw new AppError('Not found', 404)
-// ─────────────────────────────────────────
 class AppError extends Error {
   constructor(message, statusCode = 500) {
     super(message)
@@ -11,25 +6,15 @@ class AppError extends Error {
   }
 }
 
-// ─────────────────────────────────────────
-// 404 HANDLER
-// Catches any request to a route that does not exist
-// Placed after all routes in app.js
-// ─────────────────────────────────────────
 const notFound = (req, res, next) => {
   next(new AppError(`Route ${req.originalUrl} not found`, 404))
 }
 
-// ─────────────────────────────────────────
-// GLOBAL ERROR HANDLER
-// Catches every error thrown anywhere in the app
-// Must have 4 parameters — Express identifies it as an error handler this way
-// ─────────────────────────────────────────
 const errorHandler = (err, req, res, next) => {
   let message = err.message || 'Something went wrong'
   let statusCode = err.statusCode || 500
 
-  // ── Prisma specific errors ──────────────
+  // Prisma specific errors
 
   // Unique constraint violation — e.g. email already exists
   if (err.code === 'P2002') {
@@ -50,7 +35,7 @@ const errorHandler = (err, req, res, next) => {
     statusCode = 400
   }
 
-  // ── JWT errors ──────────────────────────
+  // JWT errors
   if (err.name === 'JsonWebTokenError')  {
     message = 'Invalid token'
     statusCode = 401
@@ -61,7 +46,7 @@ const errorHandler = (err, req, res, next) => {
     statusCode = 401
   }
 
-  // ── Zod validation errors ───────────────
+  // Zod validation errors
   if (err.name === 'ZodError') {
     message = 'Validation failed'
     statusCode = 400

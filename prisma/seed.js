@@ -2,11 +2,9 @@ import { PrismaClient } from '@prisma/client'
 
 const prisma = new PrismaClient()
 
-// ─────────────────────────────────────────
 // SEED DATA
 // 40+ crops, plants and flowers for the encyclopedia
-// Run with: npx prisma db seed
-// ─────────────────────────────────────────
+
 
 const crops = [
     // ── GRAINS ──────────────────────────────

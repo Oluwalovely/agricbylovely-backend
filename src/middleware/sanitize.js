@@ -1,11 +1,3 @@
-// ─────────────────────────────────────────
-// INPUT SANITIZER MIDDLEWARE
-// Cleans incoming request data before it hits any route
-// Prevents common attack patterns like XSS
-// ─────────────────────────────────────────
-
-// Recursively trims all string values in an object
-// e.g. { name: "  Adewale  " } becomes { name: "Adewale" }
 const trimStrings = (obj) => {
     if (typeof obj !== 'object' || obj === null) return obj
 
@@ -22,8 +14,7 @@ const trimStrings = (obj) => {
     }, {})
 }
 
-// Removes any keys that have empty string values
-// Prevents saving empty strings to the database
+
 const removeEmptyStrings = (obj) => {
     if (typeof obj !== 'object' || obj === null) return obj
 
@@ -36,7 +27,6 @@ const removeEmptyStrings = (obj) => {
     }, {})
 }
 
-// The actual middleware function
 const sanitize = (req, res, next) => {
     if (req.body) {
         req.body = trimStrings(req.body)
