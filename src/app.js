@@ -13,8 +13,7 @@ const app = express()
 // Helmet sets HTTP headers that protect against common attacks
 app.use(helmet())
 
-// CORS 
-// Only allow requests from our frontend URL
+
 app.use(cors({
   origin: env.CLIENT_URL,
   credentials: true, 
@@ -22,7 +21,6 @@ app.use(cors({
 
 //  Global rate limiter 
 // Max 200 requests per 15 minutes per IP address
-// Auth routes have their own stricter limiter
 app.use(rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 200,
