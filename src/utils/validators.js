@@ -1,6 +1,9 @@
 import { z } from 'zod'
 
-
+// ─────────────────────────────────────────
+// REGISTER SCHEMA
+// Validates the request body for POST /api/auth/register
+// ─────────────────────────────────────────
 export const registerSchema = z.object({
   body: z.object({
     email: z
@@ -28,42 +31,83 @@ export const registerSchema = z.object({
       .max(100),
 
     // Optional fields
-    phone:      z.string().optional(),
+    phone: z.string().optional(),
     farmSizeHa: z.number().positive().optional(),
-    soilType:   z.enum(['CLAY', 'SANDY', 'LOAMY', 'SILTY', 'PEATY', 'CHALKY']).optional(),
-    latitude:   z.number().min(-90).max(90).optional(),
-    longitude:  z.number().min(-180).max(180).optional(),
-    state:      z.string().optional(),
+    soilType: z.enum(['CLAY', 'SANDY', 'LOAMY', 'SILTY', 'PEATY', 'CHALKY']).optional(),
+    latitude: z.number().min(-90).max(90).optional(),
+    longitude: z.number().min(-180).max(180).optional(),
+    state: z.string().optional(),
   }),
 })
 
-
+// ─────────────────────────────────────────
+// LOGIN SCHEMA
+// Validates the request body for POST /api/auth/login
+// ─────────────────────────────────────────
 export const loginSchema = z.object({
   body: z.object({
-    email:    z.string().email('Please enter a valid email address'),
+    email: z.string().email('Please enter a valid email address'),
     password: z.string().min(1, 'Password is required'),
   }),
 })
 
-
+// ─────────────────────────────────────────
+// UPDATE PROFILE SCHEMA
+// Validates PUT /api/farmers/me
+// All fields are optional — farmer only sends what they want to change
+// ─────────────────────────────────────────
 export const updateProfileSchema = z.object({
   body: z.object({
-    firstName:  z.string().min(2).max(50).optional(),
-    lastName:   z.string().min(2).max(50).optional(),
-    phone:      z.string().optional(),
-    farmName:   z.string().min(2).max(100).optional(),
+    firstName: z.string().min(2).max(50).optional(),
+    lastName: z.string().min(2).max(50).optional(),
+    phone: z.string().optional(),
+    farmName: z.string().min(2).max(100).optional(),
     farmSizeHa: z.number().positive().optional(),
-    soilType:   z.enum(['CLAY', 'SANDY', 'LOAMY', 'SILTY', 'PEATY', 'CHALKY']).optional(),
-    latitude:   z.number().min(-90).max(90).optional(),
-    longitude:  z.number().min(-180).max(180).optional(),
-    state:      z.string().optional(),
+    soilType: z.enum(['CLAY', 'SANDY', 'LOAMY', 'SILTY', 'PEATY', 'CHALKY']).optional(),
+    latitude: z.number().min(-90).max(90).optional(),
+    longitude: z.number().min(-180).max(180).optional(),
+    state: z.string().optional(),
   }),
 })
 
-
+// ─────────────────────────────────────────
+// CHANGE PASSWORD SCHEMA
+// Validates PUT /api/farmers/me/password
+// ─────────────────────────────────────────
 export const changePasswordSchema = z.object({
   body: z.object({
     currentPassword: z.string().min(1, 'Current password is required'),
-    newPassword:     z.string().min(8, 'New password must be at least 8 characters'),
+    newPassword: z.string().min(8, 'New password must be at least 8 characters'),
+  }),
+})
+
+// ─────────────────────────────────────────
+// CREATE FIELD SCHEMA
+// Validates POST /api/fields
+// ─────────────────────────────────────────
+export const createFieldSchema = z.object({
+  body: z.object({
+    name: z.string().min(1, 'Field name is required').max(100),
+    sizeHa: z.number().positive().optional(),
+    soilType: z.enum(['CLAY', 'SANDY', 'LOAMY', 'SILTY', 'PEATY', 'CHALKY']).optional(),
+    latitude: z.number().min(-90).max(90).optional(),
+    longitude: z.number().min(-180).max(180).optional(),
+    notes: z.string().optional(),
+  }),
+})
+
+// ─────────────────────────────────────────
+// UPDATE FIELD SCHEMA
+// Validates PUT /api/fields/:id
+// All fields optional — only send what changed
+// ─────────────────────────────────────────
+export const updateFieldSchema = z.object({
+  body: z.object({
+    name: z.string().min(1).max(100).optional(),
+    sizeHa: z.number().positive().optional(),
+    soilType: z.enum(['CLAY', 'SANDY', 'LOAMY', 'SILTY', 'PEATY', 'CHALKY']).optional(),
+    latitude: z.number().min(-90).max(90).optional(),
+    longitude: z.number().min(-180).max(180).optional(),
+    notes: z.string().optional(),
   }),
 })

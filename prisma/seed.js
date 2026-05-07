@@ -2,9 +2,11 @@ import { PrismaClient } from '@prisma/client'
 
 const prisma = new PrismaClient()
 
+// ─────────────────────────────────────────
 // SEED DATA
 // 40+ crops, plants and flowers for the encyclopedia
-
+// Run with: npx prisma db seed
+// ─────────────────────────────────────────
 
 const crops = [
     // ── GRAINS ──────────────────────────────
@@ -533,6 +535,408 @@ async function main() {
 main()
     .catch((e) => {
         console.error('Seed failed:', e)
+        process.exit(1)
+    })
+    .finally(() => prisma.$disconnect())
+
+// ─────────────────────────────────────────
+// ADDITIONAL NIGERIAN CROPS
+// Local crops not found in western databases
+// ─────────────────────────────────────────
+
+const nigerianCrops = [
+    // ── NIGERIAN VEGETABLES & LEAVES ────────
+    {
+        name: 'Bitter Leaf',
+        botanicalName: 'Vernonia amygdalina',
+        category: 'VEGETABLE',
+        description: 'Popular Nigerian leafy vegetable used in bitter leaf soup. Also has medicinal properties — used to treat malaria and diabetes. Grows easily across Nigeria.',
+        daysToHarvest: 90,
+        plantingDepthCm: 5,
+        spacingCm: 50,
+        waterNeedsMm: 40,
+        sunlight: 'FULL_SUN',
+        climateZone: 'Tropical',
+        soilTypes: ['LOAMY', 'CLAY'],
+        companionPlants: ['Ugwu', 'Waterleaf'],
+        pestsAndDiseases: ['Leaf spot', 'Aphids'],
+        plantingMonths: [3, 4, 9, 10],
+        harvestMonths: [6, 7, 12, 1],
+    },
+    {
+        name: 'Utazi Leaf',
+        botanicalName: 'Gongronema latifolium',
+        category: 'VEGETABLE',
+        description: 'Bitter-tasting leaf used in Nigerian soups like Ofe Onugbu and Nsala soup. Common in the South-East. Also used medicinally.',
+        daysToHarvest: 120,
+        plantingDepthCm: 5,
+        spacingCm: 60,
+        waterNeedsMm: 45,
+        sunlight: 'PARTIAL_SUN',
+        climateZone: 'Tropical',
+        soilTypes: ['LOAMY', 'CLAY'],
+        companionPlants: ['Bitter Leaf'],
+        pestsAndDiseases: ['Root rot', 'Aphids'],
+        plantingMonths: [3, 4, 9],
+        harvestMonths: [7, 8, 12],
+    },
+    {
+        name: 'Efo Tete (African Spinach)',
+        botanicalName: 'Amaranthus hybridus',
+        category: 'VEGETABLE',
+        description: 'Fast-growing leafy vegetable very popular in Yoruba cuisine. Used in Efo Riro soup. Rich in iron and vitamins. Grows well across Nigeria.',
+        daysToHarvest: 30,
+        plantingDepthCm: 1,
+        spacingCm: 20,
+        waterNeedsMm: 40,
+        sunlight: 'FULL_SUN',
+        climateZone: 'Tropical',
+        soilTypes: ['LOAMY', 'SANDY', 'CLAY'],
+        companionPlants: ['Waterleaf', 'Scent Leaf'],
+        pestsAndDiseases: ['Aphids', 'Leaf miner'],
+        plantingMonths: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+        harvestMonths: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+    },
+    {
+        name: 'Moringa',
+        botanicalName: 'Moringa oleifera',
+        category: 'VEGETABLE',
+        description: 'Called the miracle tree. Leaves, seeds and pods are all edible and highly nutritious. Drought tolerant and grows fast. High commercial and export value.',
+        daysToHarvest: 60,
+        plantingDepthCm: 2,
+        spacingCm: 300,
+        waterNeedsMm: 20,
+        sunlight: 'FULL_SUN',
+        climateZone: 'Tropical',
+        soilTypes: ['SANDY', 'LOAMY'],
+        companionPlants: [],
+        pestsAndDiseases: ['Aphids', 'Caterpillars'],
+        plantingMonths: [3, 4, 5, 9, 10],
+        harvestMonths: [5, 6, 7, 11, 12],
+    },
+    {
+        name: 'African Eggplant (Igba)',
+        botanicalName: 'Solanum macrocarpon',
+        category: 'VEGETABLE',
+        description: 'Traditional Nigerian eggplant used in soups and stews. Different from the common garden egg. Very popular in the South-West.',
+        daysToHarvest: 70,
+        plantingDepthCm: 1,
+        spacingCm: 50,
+        waterNeedsMm: 40,
+        sunlight: 'FULL_SUN',
+        climateZone: 'Tropical',
+        soilTypes: ['LOAMY'],
+        companionPlants: ['Pepper', 'Tomato'],
+        pestsAndDiseases: ['Flea beetle', 'Whitefly'],
+        plantingMonths: [3, 4, 9, 10],
+        harvestMonths: [6, 7, 12, 1],
+    },
+    {
+        name: 'African Basil (Efinrin)',
+        botanicalName: 'Ocimum gratissimum',
+        category: 'HERB',
+        description: 'Essential herb in Yoruba cooking. Used fresh in soups and as a natural insect repellent. Grows abundantly with minimal care.',
+        daysToHarvest: 21,
+        plantingDepthCm: 1,
+        spacingCm: 30,
+        waterNeedsMm: 25,
+        sunlight: 'FULL_SUN',
+        climateZone: 'Tropical',
+        soilTypes: ['LOAMY', 'SANDY'],
+        companionPlants: ['Tomato', 'Pepper'],
+        pestsAndDiseases: ['Aphids'],
+        plantingMonths: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+        harvestMonths: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+    },
+
+    // ── NIGERIAN LEGUMES ─────────────────────
+    {
+        name: 'African Yam Bean (Otili)',
+        botanicalName: 'Sphenostylis stenocarpa',
+        category: 'LEGUME',
+        description: 'Nutritious Nigerian bean used to make porridge and moi moi. Higher protein than common cowpea. Popular in the South-West and Middle Belt.',
+        daysToHarvest: 150,
+        plantingDepthCm: 5,
+        spacingCm: 30,
+        waterNeedsMm: 30,
+        sunlight: 'FULL_SUN',
+        climateZone: 'Tropical',
+        soilTypes: ['LOAMY', 'SANDY'],
+        companionPlants: ['Maize', 'Sorghum'],
+        pestsAndDiseases: ['Bruchid weevil', 'Pod borer'],
+        plantingMonths: [6, 7],
+        harvestMonths: [11, 12],
+    },
+    {
+        name: 'Locust Bean (Iru/Dawadawa)',
+        botanicalName: 'Parkia biglobosa',
+        category: 'LEGUME',
+        description: 'Tree crop producing pods used as a fermented seasoning (Iru or Dawadawa). Essential flavouring in Nigerian soups. High value cash crop.',
+        daysToHarvest: 1825, // 5 years to first fruit
+        plantingDepthCm: 10,
+        spacingCm: 1000,
+        waterNeedsMm: 30,
+        sunlight: 'FULL_SUN',
+        climateZone: 'Tropical',
+        soilTypes: ['LOAMY', 'SANDY', 'CLAY'],
+        companionPlants: [],
+        pestsAndDiseases: ['Bruchid beetle', 'Pod borer'],
+        plantingMonths: [5, 6],
+        harvestMonths: [2, 3, 4],
+    },
+    {
+        name: 'Bambara Groundnut',
+        botanicalName: 'Vigna subterranea',
+        category: 'LEGUME',
+        description: 'Drought-resistant underground bean grown across northern and middle-belt Nigeria. Used in porridge and as a snack. Very nutritious.',
+        daysToHarvest: 150,
+        plantingDepthCm: 5,
+        spacingCm: 25,
+        waterNeedsMm: 25,
+        sunlight: 'FULL_SUN',
+        climateZone: 'Semi-arid',
+        soilTypes: ['SANDY', 'LOAMY'],
+        companionPlants: ['Sorghum', 'Millet'],
+        pestsAndDiseases: ['Aphids', 'Rosette virus'],
+        plantingMonths: [6, 7],
+        harvestMonths: [10, 11],
+    },
+
+    // ── NIGERIAN CASH CROPS ──────────────────
+    {
+        name: 'Cocoa',
+        botanicalName: 'Theobroma cacao',
+        category: 'FRUIT',
+        description: 'Nigeria is Africa\'s third largest cocoa producer. Grown mainly in Ondo, Osun, Ogun and Cross River states. Major export crop with high revenue potential.',
+        daysToHarvest: 1460, // 4 years to first harvest
+        plantingDepthCm: 5,
+        spacingCm: 300,
+        waterNeedsMm: 70,
+        sunlight: 'PARTIAL_SUN',
+        climateZone: 'Tropical',
+        soilTypes: ['LOAMY', 'CLAY'],
+        companionPlants: ['Banana', 'Plantain'],
+        pestsAndDiseases: ['Black pod disease', 'Mirids', 'Swollen shoot virus'],
+        plantingMonths: [3, 4, 9, 10],
+        harvestMonths: [10, 11, 12, 1, 2, 3],
+    },
+    {
+        name: 'Palm Oil Tree',
+        botanicalName: 'Elaeis guineensis',
+        category: 'FRUIT',
+        description: 'Nigeria\'s most important tree crop. Produces palm oil and palm kernel oil. Grown across the South. Takes 3-4 years to fruit but produces for decades.',
+        daysToHarvest: 1095, // 3 years
+        plantingDepthCm: 30,
+        spacingCm: 900,
+        waterNeedsMm: 80,
+        sunlight: 'FULL_SUN',
+        climateZone: 'Tropical',
+        soilTypes: ['LOAMY', 'CLAY'],
+        companionPlants: ['Cocoa', 'Pineapple'],
+        pestsAndDiseases: ['Rhinoceros beetle', 'Crown disease', 'Vascular wilt'],
+        plantingMonths: [3, 4, 5],
+        harvestMonths: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+    },
+    {
+        name: 'Plantain',
+        botanicalName: 'Musa paradisiaca',
+        category: 'FRUIT',
+        description: 'Cooking banana widely grown and consumed across Nigeria. Used for dodo, boli, chips and flour. Fruits year-round in southern states.',
+        daysToHarvest: 300,
+        plantingDepthCm: 30,
+        spacingCm: 300,
+        waterNeedsMm: 80,
+        sunlight: 'FULL_SUN',
+        climateZone: 'Tropical',
+        soilTypes: ['LOAMY', 'CLAY'],
+        companionPlants: ['Cocoa', 'Yam'],
+        pestsAndDiseases: ['Black sigatoka', 'Banana weevil', 'Fusarium wilt'],
+        plantingMonths: [3, 4, 5, 9, 10],
+        harvestMonths: [9, 10, 11, 12, 1, 2],
+    },
+    {
+        name: 'Rubber Tree',
+        botanicalName: 'Hevea brasiliensis',
+        category: 'FRUIT',
+        description: 'Important plantation crop in Edo, Delta and Cross River states. Latex is tapped for rubber production. Long term investment crop.',
+        daysToHarvest: 2555, // 7 years to first tapping
+        plantingDepthCm: 10,
+        spacingCm: 600,
+        waterNeedsMm: 60,
+        sunlight: 'FULL_SUN',
+        climateZone: 'Tropical',
+        soilTypes: ['LOAMY', 'CLAY'],
+        companionPlants: [],
+        pestsAndDiseases: ['South American leaf blight', 'Pink disease', 'Bark rot'],
+        plantingMonths: [4, 5, 6],
+        harvestMonths: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+    },
+    {
+        name: 'Sesame (Beniseed)',
+        botanicalName: 'Sesamum indicum',
+        category: 'GRAIN',
+        description: 'Called Beniseed in Nigeria. Major export crop grown in Benue, Nasarawa and Taraba. Seeds used for oil and food. High market value.',
+        daysToHarvest: 90,
+        plantingDepthCm: 1,
+        spacingCm: 10,
+        waterNeedsMm: 25,
+        sunlight: 'FULL_SUN',
+        climateZone: 'Semi-arid',
+        soilTypes: ['SANDY', 'LOAMY'],
+        companionPlants: ['Cowpea', 'Sorghum'],
+        pestsAndDiseases: ['Aphids', 'Phytophthora blight', 'Leaf spot'],
+        plantingMonths: [6, 7],
+        harvestMonths: [9, 10],
+    },
+    {
+        name: 'Cotton',
+        botanicalName: 'Gossypium hirsutum',
+        category: 'GRAIN',
+        description: 'Fibre crop grown mainly in northern Nigeria — Kano, Zamfara, Sokoto. Important for textile industry. Government supported crop.',
+        daysToHarvest: 150,
+        plantingDepthCm: 3,
+        spacingCm: 75,
+        waterNeedsMm: 40,
+        sunlight: 'FULL_SUN',
+        climateZone: 'Semi-arid',
+        soilTypes: ['CLAY', 'LOAMY'],
+        companionPlants: [],
+        pestsAndDiseases: ['Bollworm', 'Aphids', 'Whitefly', 'Bacterial blight'],
+        plantingMonths: [5, 6],
+        harvestMonths: [10, 11],
+    },
+
+    // ── NIGERIAN TUBERS ──────────────────────
+    {
+        name: 'Cocoyam (Taro)',
+        botanicalName: 'Colocasia esculenta',
+        category: 'TUBER',
+        description: 'Root crop popular in the South-East and South-South. Used in soups, porridge and as a vegetable. Grows well in humid conditions.',
+        daysToHarvest: 180,
+        plantingDepthCm: 10,
+        spacingCm: 60,
+        waterNeedsMm: 70,
+        sunlight: 'PARTIAL_SUN',
+        climateZone: 'Tropical',
+        soilTypes: ['LOAMY', 'CLAY'],
+        companionPlants: ['Banana', 'Plantain'],
+        pestsAndDiseases: ['Taro leaf blight', 'Root rot', 'Mealybug'],
+        plantingMonths: [3, 4, 5],
+        harvestMonths: [9, 10, 11],
+    },
+    {
+        name: 'Tiger Nut (Ofio)',
+        botanicalName: 'Cyperus esculentus',
+        category: 'TUBER',
+        description: 'Small tuber used to make Kunu Aya drink. Very popular in northern Nigeria. High in healthy fats and dietary fibre. Growing export market.',
+        daysToHarvest: 120,
+        plantingDepthCm: 5,
+        spacingCm: 20,
+        waterNeedsMm: 35,
+        sunlight: 'FULL_SUN',
+        climateZone: 'Tropical',
+        soilTypes: ['SANDY', 'LOAMY'],
+        companionPlants: [],
+        pestsAndDiseases: ['Nematodes', 'Tuber rot'],
+        plantingMonths: [4, 5, 6],
+        harvestMonths: [8, 9, 10],
+    },
+
+    // ── NIGERIAN FRUITS ──────────────────────
+    {
+        name: 'African Star Apple (Agbalumo)',
+        botanicalName: 'Chrysophyllum albidum',
+        category: 'FRUIT',
+        description: 'Beloved seasonal fruit in Nigeria. Called Agbalumo in Yoruba and Udara in Igbo. Seasonal from November to March. High demand and good market price.',
+        daysToHarvest: 1825, // 5 years from seed
+        plantingDepthCm: 5,
+        spacingCm: 1000,
+        waterNeedsMm: 30,
+        sunlight: 'FULL_SUN',
+        climateZone: 'Tropical',
+        soilTypes: ['LOAMY', 'SANDY'],
+        companionPlants: [],
+        pestsAndDiseases: ['Fruit fly', 'Scale insects'],
+        plantingMonths: [4, 5],
+        harvestMonths: [11, 12, 1, 2, 3],
+    },
+    {
+        name: 'Mango',
+        botanicalName: 'Mangifera indica',
+        category: 'FRUIT',
+        description: 'Nigeria\'s most popular fruit tree. Grown across all regions. Many varieties available. High commercial value — fresh consumption and processing.',
+        daysToHarvest: 1095, // 3 years from grafted seedling
+        plantingDepthCm: 10,
+        spacingCm: 1000,
+        waterNeedsMm: 40,
+        sunlight: 'FULL_SUN',
+        climateZone: 'Tropical',
+        soilTypes: ['LOAMY', 'SANDY', 'CLAY'],
+        companionPlants: [],
+        pestsAndDiseases: ['Mango weevil', 'Anthracnose', 'Powdery mildew'],
+        plantingMonths: [4, 5],
+        harvestMonths: [4, 5, 6, 7],
+    },
+    {
+        name: 'Guava',
+        botanicalName: 'Psidium guajava',
+        category: 'FRUIT',
+        description: 'Hardy fruit tree that grows well across Nigeria. Fruits twice a year. Used fresh, for juice and jam production. Easy to grow with low maintenance.',
+        daysToHarvest: 730, // 2 years from seedling
+        plantingDepthCm: 5,
+        spacingCm: 500,
+        waterNeedsMm: 35,
+        sunlight: 'FULL_SUN',
+        climateZone: 'Tropical',
+        soilTypes: ['LOAMY', 'SANDY', 'CLAY'],
+        companionPlants: [],
+        pestsAndDiseases: ['Fruit fly', 'Guava wilt', 'Scale insects'],
+        plantingMonths: [3, 4, 9],
+        harvestMonths: [6, 7, 12, 1],
+    },
+    {
+        name: 'Cashew',
+        botanicalName: 'Anacardium occidentale',
+        category: 'FRUIT',
+        description: 'Grown mainly in Kogi, Enugu, Anambra and Oyo states. Both the nut and the apple are valuable. Major export earner for Nigeria.',
+        daysToHarvest: 1095, // 3 years
+        plantingDepthCm: 5,
+        spacingCm: 1000,
+        waterNeedsMm: 30,
+        sunlight: 'FULL_SUN',
+        climateZone: 'Tropical',
+        soilTypes: ['SANDY', 'LOAMY'],
+        companionPlants: [],
+        pestsAndDiseases: ['Anthracnose', 'Thrips', 'Tea mosquito bug'],
+        plantingMonths: [5, 6],
+        harvestMonths: [2, 3, 4, 5],
+    },
+]
+
+// Add Nigerian crops to the main seed function
+async function seedNigerianCrops() {
+    console.log('\nSeeding Nigerian-specific crops...')
+
+    for (const crop of nigerianCrops) {
+        // Check if crop already exists before inserting
+        const exists = await prisma.crop.findFirst({
+            where: { name: { equals: crop.name, mode: 'insensitive' } },
+        })
+
+        if (!exists) {
+            await prisma.crop.create({ data: crop })
+            console.log(`  Added: ${crop.name}`)
+        } else {
+            console.log(`  Skipped (already exists): ${crop.name}`)
+        }
+    }
+
+    console.log(`\nNigerian crops seeded — total added: ${nigerianCrops.length}`)
+}
+
+seedNigerianCrops()
+    .catch((e) => {
+        console.error('Nigerian seed failed:', e)
         process.exit(1)
     })
     .finally(() => prisma.$disconnect())
