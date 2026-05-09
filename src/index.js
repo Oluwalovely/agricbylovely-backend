@@ -13,6 +13,8 @@ export const io = new Server(httpServer, {
     },
 })
 
+app.set('io', io) // Make io accessible in controllers via req.app.get('io')
+
 io.on('connection', (socket) => {
     console.log(`Socket connected: ${socket.id}`)
 
