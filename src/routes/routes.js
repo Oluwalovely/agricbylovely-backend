@@ -8,6 +8,8 @@ import uploadRouter        from './upload.routes.js'
 import weatherRouter       from './weather.routes.js'
 import calendarRouter      from './calendar.routes.js'
 import notificationRouter  from './notification.routes.js'
+import emailRouter         from './email.routes.js'
+import jobsRouter          from './jobs.routes.js'
 
 const router = Router()
 
@@ -20,8 +22,10 @@ router.use('/upload',        uploadRouter)
 router.use('/weather',       weatherRouter)
 router.use('/calendar',      calendarRouter)
 router.use('/notifications', notificationRouter)
+router.use('/email',         emailRouter)
+router.use('/jobs',          jobsRouter)
 
-// Coming in upcoming days:
+// Coming tomorrow:
 // router.use('/reports', reportRouter)
 
 export default router

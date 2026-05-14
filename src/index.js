@@ -2,6 +2,7 @@ import { createServer } from 'http'
 import { Server } from 'socket.io'
 import app from './app.js'
 import { env } from './config/env.js'
+import { startScheduler } from './jobs/scheduler.js'
 
 const httpServer = createServer(app)
 
@@ -36,6 +37,8 @@ httpServer.listen(env.PORT, () => {
   Port        : ${env.PORT}
   Health check: http://localhost:${env.PORT}/api/health
   `)
+
+    startScheduler(io)
 })
 
 // Graceful shutdown
