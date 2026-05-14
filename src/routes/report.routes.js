@@ -7,8 +7,8 @@ const router = Router()
 
 router.use(authenticate)
 
-router.get('/dashboard',       getDashboard)      // GET /api/reports/dashboard
-router.get('/summary',         getFarmSummary)    // GET /api/reports/summary
-router.get('/harvest-history', getHarvestHistory) // GET /api/reports/harvest-history
+router.get('/dashboard',       getDashboard)      
+router.get('/summary',         getFarmSummary)    
+router.get('/harvest-history', getHarvestHistory) 
 
 export default router
