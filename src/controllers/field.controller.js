@@ -1,11 +1,7 @@
 import prisma from '../config/prisma.js'
 import { success, fail } from '../utils/response.js'
 
-// ─────────────────────────────────────────
-// CREATE A FIELD
-// POST /api/fields
-// Farmer adds a new plot of land to their farm
-// ─────────────────────────────────────────
+
 const createField = async (req, res, next) => {
     try {
         const { name, sizeHa, soilType, latitude, longitude, notes } = req.body
@@ -28,11 +24,7 @@ const createField = async (req, res, next) => {
     }
 }
 
-// ─────────────────────────────────────────
-// GET ALL MY FIELDS
-// GET /api/fields
-// Returns all fields belonging to the logged-in farmer
-// ─────────────────────────────────────────
+
 const getMyFields = async (req, res, next) => {
     try {
         const fields = await prisma.field.findMany({
@@ -58,10 +50,7 @@ const getMyFields = async (req, res, next) => {
     }
 }
 
-// ─────────────────────────────────────────
-// GET ONE FIELD
-// GET /api/fields/:id
-// ─────────────────────────────────────────
+
 const getFieldById = async (req, res, next) => {
     try {
         const field = await prisma.field.findFirst({
@@ -87,10 +76,7 @@ const getFieldById = async (req, res, next) => {
     }
 }
 
-// ─────────────────────────────────────────
-// UPDATE A FIELD
-// PUT /api/fields/:id
-// ─────────────────────────────────────────
+
 const updateField = async (req, res, next) => {
     try {
         const { name, sizeHa, soilType, latitude, longitude, notes } = req.body
@@ -124,10 +110,7 @@ const updateField = async (req, res, next) => {
     }
 }
 
-// ─────────────────────────────────────────
-// DELETE A FIELD
-// DELETE /api/fields/:id
-// ─────────────────────────────────────────
+
 const deleteField = async (req, res, next) => {
     try {
         // Make sure the field belongs to this farmer
@@ -147,11 +130,7 @@ const deleteField = async (req, res, next) => {
     }
 }
 
-// ─────────────────────────────────────────
-// GET FIELD SUMMARY
-// GET /api/fields/summary
-// Returns a quick overview of all fields for the dashboard
-// ─────────────────────────────────────────
+
 const getFieldSummary = async (req, res, next) => {
     try {
         const fields = await prisma.field.findMany({

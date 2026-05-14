@@ -7,20 +7,16 @@ import {
 } from '../controllers/upload.controller.js'
 import { authenticate } from '../middleware/auth.js'
 import { uploadSingle, handleUploadError } from '../middleware/upload.js'
+import { uploadLimiter } from '../middleware/security.js'
 
 const router = Router()
 
-// All upload routes require login
 router.use(authenticate)
+router.use(uploadLimiter) 
 
-// Avatar
-router.post('/avatar', uploadSingle, handleUploadError, uploadFarmerAvatar)       // POST   /api/upload/avatar
-router.delete('/avatar', deleteFarmerAvatar)                                        // DELETE /api/upload/avatar
-
-// Field photo
-router.post('/fields/:fieldId', uploadSingle, handleUploadError, uploadFieldImage)  // POST /api/upload/fields/:fieldId
-
-// Crop photo
-router.post('/crops/:farmerCropId', uploadSingle, handleUploadError, uploadCropImage) // POST /api/upload/crops/:farmerCropId
+router.post('/avatar', uploadSingle, handleUploadError, uploadFarmerAvatar)
+router.delete('/avatar', deleteFarmerAvatar)
+router.post('/fields/:fieldId', uploadSingle, handleUploadError, uploadFieldImage)
+router.post('/crops/:farmerCropId', uploadSingle, handleUploadError, uploadCropImage)
 
 export default router

@@ -2,11 +2,7 @@ import prisma from '../config/prisma.js'
 import { success, fail } from '../utils/response.js'
 import { getWeatherForLocation } from '../services/weather.service.js'
 
-// ─────────────────────────────────────────
-// GET MY WEATHER
-// GET /api/weather
-// Returns weather for the logged-in farmer's location
-// ─────────────────────────────────────────
+
 const getMyWeather = async (req, res, next) => {
     try {
         // Get the farmer's saved location
@@ -37,12 +33,7 @@ const getMyWeather = async (req, res, next) => {
     }
 }
 
-// ─────────────────────────────────────────
-// GET WEATHER BY COORDINATES
-// GET /api/weather/search?lat=6.89&lon=3.47
-// Fetch weather for any location — useful for
-// farmers who want to check another area
-// ─────────────────────────────────────────
+
 const getWeatherByCoords = async (req, res, next) => {
     try {
         const { lat, lon } = req.query
@@ -69,12 +60,7 @@ const getWeatherByCoords = async (req, res, next) => {
     }
 }
 
-// ─────────────────────────────────────────
-// GET WEATHER ALERTS ONLY
-// GET /api/weather/alerts
-// Returns only the farming alerts for the farmer's location
-// Used by the notification system
-// ─────────────────────────────────────────
+
 const getMyAlerts = async (req, res, next) => {
     try {
         const farmer = await prisma.farmer.findUnique({

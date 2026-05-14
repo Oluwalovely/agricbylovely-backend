@@ -1,9 +1,6 @@
 import { z } from 'zod'
 
-// ─────────────────────────────────────────
-// REGISTER SCHEMA
-// Validates the request body for POST /api/auth/register
-// ─────────────────────────────────────────
+
 export const registerSchema = z.object({
   body: z.object({
     email: z
@@ -40,10 +37,7 @@ export const registerSchema = z.object({
   }),
 })
 
-// ─────────────────────────────────────────
-// LOGIN SCHEMA
-// Validates the request body for POST /api/auth/login
-// ─────────────────────────────────────────
+
 export const loginSchema = z.object({
   body: z.object({
     email: z.string().email('Please enter a valid email address'),
@@ -51,11 +45,7 @@ export const loginSchema = z.object({
   }),
 })
 
-// ─────────────────────────────────────────
-// UPDATE PROFILE SCHEMA
-// Validates PUT /api/farmers/me
-// All fields are optional — farmer only sends what they want to change
-// ─────────────────────────────────────────
+
 export const updateProfileSchema = z.object({
   body: z.object({
     firstName: z.string().min(2).max(50).optional(),
@@ -70,10 +60,7 @@ export const updateProfileSchema = z.object({
   }),
 })
 
-// ─────────────────────────────────────────
-// CHANGE PASSWORD SCHEMA
-// Validates PUT /api/farmers/me/password
-// ─────────────────────────────────────────
+
 export const changePasswordSchema = z.object({
   body: z.object({
     currentPassword: z.string().min(1, 'Current password is required'),
@@ -81,10 +68,7 @@ export const changePasswordSchema = z.object({
   }),
 })
 
-// ─────────────────────────────────────────
-// CREATE FIELD SCHEMA
-// Validates POST /api/fields
-// ─────────────────────────────────────────
+
 export const createFieldSchema = z.object({
   body: z.object({
     name: z.string().min(1, 'Field name is required').max(100),
@@ -96,11 +80,7 @@ export const createFieldSchema = z.object({
   }),
 })
 
-// ─────────────────────────────────────────
-// UPDATE FIELD SCHEMA
-// Validates PUT /api/fields/:id
-// All fields optional — only send what changed
-// ─────────────────────────────────────────
+
 export const updateFieldSchema = z.object({
   body: z.object({
     name: z.string().min(1).max(100).optional(),

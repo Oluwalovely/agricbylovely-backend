@@ -2,16 +2,8 @@ import nodemailer from 'nodemailer'
 import prisma from '../config/prisma.js'
 import { env } from '../config/env.js'
 
-// ─────────────────────────────────────────
-// EMAIL SERVICE
-// Handles all outgoing emails for AgricbyLovely
-// Uses Nodemailer with Resend SMTP
-// Logs every sent email to the database
-// ─────────────────────────────────────────
 
-// ── Create transporter ────────────────────
-// This is the connection to the email server
-// Created once and reused for all emails
+
 const transporter = nodemailer.createTransport({
     host: env.SMTP_HOST,
     port: parseInt(env.SMTP_PORT),
@@ -22,7 +14,7 @@ const transporter = nodemailer.createTransport({
     },
 })
 
-// ── Base email wrapper ────────────────────
+
 // Sends any email and logs it to the database
 const sendEmail = async ({ to, subject, html, farmerId = null, template }) => {
     try {
@@ -66,13 +58,9 @@ const sendEmail = async ({ to, subject, html, farmerId = null, template }) => {
     }
 }
 
-// ─────────────────────────────────────────
-// EMAIL TEMPLATES
-// Each template is a function that returns
-// an HTML string for a specific email type
-// ─────────────────────────────────────────
 
-// ── Brand colors and shared styles ────────
+
+// Brand colors and shared styles
 const styles = `
   body { margin:0; padding:0; font-family: Arial, sans-serif; background:#f4f7f0; }
   .wrapper { max-width:600px; margin:0 auto; background:#ffffff; }
@@ -96,8 +84,7 @@ const styles = `
   .footer p { color:#888888; font-size:12px; margin:0; line-height:1.8; }
 `
 
-// ── Welcome email ─────────────────────────
-// Sent when a farmer registers
+
 const welcomeTemplate = (farmer) => ({
     subject: `Welcome to AgricbyLovely, ${farmer.firstName}!`,
     html: `
@@ -131,7 +118,7 @@ const welcomeTemplate = (farmer) => ({
   `,
 })
 
-// ── Weather alert email ───────────────────
+//  Weather alert email 
 // Sent when dangerous weather conditions are detected
 const weatherAlertTemplate = (farmer, alerts) => {
     const alertCards = alerts.map(alert => `
@@ -165,7 +152,7 @@ const weatherAlertTemplate = (farmer, alerts) => {
     }
 }
 
-// ── Harvest reminder email ────────────────
+//  Harvest reminder email
 // Sent 7 days, 3 days and 1 day before harvest
 const harvestReminderTemplate = (farmer, crops) => {
     const cropRows = crops.map(c => `
@@ -203,7 +190,7 @@ const harvestReminderTemplate = (farmer, crops) => {
     }
 }
 
-// ── Weekly digest email ───────────────────
+// Weekly digest email 
 // Sent every Monday morning with a farm summary
 const weeklyDigestTemplate = (farmer, data) => {
     const cropRows = data.activeCrops.slice(0, 5).map(fc => `
@@ -249,11 +236,6 @@ const weeklyDigestTemplate = (farmer, data) => {
     }
 }
 
-// ─────────────────────────────────────────
-// EMAIL SEND FUNCTIONS
-// One function per email type
-// These are called from controllers and jobs
-// ─────────────────────────────────────────
 
 // Send welcome email on registration
 const sendWelcomeEmail = async (farmer) => {

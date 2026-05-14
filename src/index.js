@@ -6,7 +6,7 @@ import { startScheduler } from './jobs/scheduler.js'
 
 const httpServer = createServer(app)
 
-// Socket.io setup — farmers join their own room by farmerId
+
 export const io = new Server(httpServer, {
     cors: {
         origin: env.CLIENT_URL,
@@ -14,7 +14,7 @@ export const io = new Server(httpServer, {
     },
 })
 
-app.set('io', io) // Make io accessible in controllers via req.app.get('io')
+app.set('io', io) 
 
 io.on('connection', (socket) => {
     console.log(`Socket connected: ${socket.id}`)

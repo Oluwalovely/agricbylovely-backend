@@ -4,13 +4,9 @@ import { getWeatherForLocation } from '../services/weather.service.js'
 import { sendWeatherAlertNotifications, sendHarvestReminder } from '../services/notification.service.js'
 import { sendWeatherAlertEmail, sendHarvestReminderEmail, sendWeeklyDigestEmail } from '../services/email.service.js'
 
-// ─────────────────────────────────────────
-// BACKGROUND JOB SCHEDULER
-// Runs scheduled tasks using node-cron
-// All jobs are logged to the Job table
-// ─────────────────────────────────────────
 
-// ── Job logger ────────────────────────────
+
+// Job logger
 // Creates a job record before running
 // Updates it after with success or failure
 const runJob = async (type, farmerId, task) => {
@@ -43,13 +39,7 @@ const runJob = async (type, farmerId, task) => {
     }
 }
 
-// ─────────────────────────────────────────
-// JOB 1 — DAILY WEATHER CHECK
-// Runs every day at 6:00 AM Lagos time
-// Checks weather for every farmer with a
-// location set and sends alerts if dangerous
-// conditions are detected
-// ─────────────────────────────────────────
+
 const runDailyWeatherCheck = async (io) => {
     console.log('Running daily weather check...')
 
@@ -89,11 +79,7 @@ const runDailyWeatherCheck = async (io) => {
     console.log('Daily weather check complete')
 }
 
-// ─────────────────────────────────────────
-// JOB 2 — HARVEST REMINDERS
-// Runs every day at 7:00 AM Lagos time
-// Sends reminders at 7, 3 and 1 day before harvest
-// ─────────────────────────────────────────
+
 const runHarvestReminders = async (io) => {
     console.log('Running harvest reminders...')
 
@@ -148,11 +134,7 @@ const runHarvestReminders = async (io) => {
     console.log('Harvest reminders complete')
 }
 
-// ─────────────────────────────────────────
-// JOB 3 — WEEKLY DIGEST
-// Runs every Monday at 7:00 AM Lagos time
-// Sends a weekly farm summary to all farmers
-// ─────────────────────────────────────────
+
 const runWeeklyDigest = async () => {
     console.log('Running weekly digest...')
 
@@ -193,10 +175,7 @@ const runWeeklyDigest = async () => {
     console.log('Weekly digest complete')
 }
 
-// ─────────────────────────────────────────
-// START ALL SCHEDULED JOBS
-// Called once from index.js when server starts
-// ─────────────────────────────────────────
+
 const startScheduler = (io) => {
     console.log('Starting job scheduler...')
 

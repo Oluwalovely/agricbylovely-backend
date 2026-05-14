@@ -12,8 +12,7 @@ const router = Router()
 
 router.use(authenticate)
 
-// ── View job history ──────────────────────
-// GET /api/jobs
+
 router.get('/', async (req, res, next) => {
     try {
         const jobs = await prisma.job.findMany({
@@ -25,7 +24,7 @@ router.get('/', async (req, res, next) => {
     } catch (err) { next(err) }
 })
 
-// ── Manually trigger jobs (development only) ──
+// Manually trigger jobs (development only) 
 router.post('/run/weather-check', async (req, res, next) => {
     try {
         const io = req.app.get('io')

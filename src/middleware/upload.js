@@ -1,12 +1,5 @@
 import multer from 'multer'
 
-// ─────────────────────────────────────────
-// MULTER UPLOAD MIDDLEWARE
-// Handles incoming file uploads before they
-// reach the controller
-// Files are kept in memory (not saved to disk)
-// then sent directly to Cloudinary
-// ─────────────────────────────────────────
 
 // Store files in memory as a Buffer
 // We never save files to disk — they go straight to Cloudinary
@@ -28,11 +21,10 @@ const limits = { fileSize: 5 * 1024 * 1024 }
 
 const upload = multer({ storage, fileFilter, limits })
 
-// Single image upload — used for avatars and field/crop photos
-// Usage: router.post('/avatar', uploadSingle, controller)
-export const uploadSingle = upload.single('image') // 'image' is the form field name
 
-// Handle multer errors gracefully
+export const uploadSingle = upload.single('image') 
+
+
 export const handleUploadError = (err, req, res, next) => {
     if (err instanceof multer.MulterError) {
         if (err.code === 'LIMIT_FILE_SIZE') {

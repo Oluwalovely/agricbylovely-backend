@@ -1,13 +1,6 @@
 import prisma from '../config/prisma.js'
 
-// ─────────────────────────────────────────
-// CALENDAR SERVICE
-// Generates planting calendar events from
-// a farmer's active crops and their planting dates
-// ─────────────────────────────────────────
 
-// Returns the name of a month from its number
-// e.g. 1 → "January", 5 → "May"
 const getMonthName = (monthNumber) => {
     return new Date(2026, monthNumber - 1, 1)
         .toLocaleString('en', { month: 'long' })
@@ -29,11 +22,7 @@ const getGrowthProgress = (plantedAt, expectedHarvestAt) => {
     return Math.min(100, Math.round((elapsed / total) * 100))
 }
 
-// ─────────────────────────────────────────
-// GET CALENDAR EVENTS FOR A FARMER
-// Returns all planting and harvest events
-// grouped by month for easy display
-// ─────────────────────────────────────────
+
 const getCalendarEvents = async (farmerId, month, year) => {
     // Get all active crops for this farmer
     const farmerCrops = await prisma.farmerCrop.findMany({
@@ -110,11 +99,7 @@ const getCalendarEvents = async (farmerId, month, year) => {
     return events
 }
 
-// ─────────────────────────────────────────
-// GET UPCOMING EVENTS
-// Returns events happening in the next N days
-// Used for the dashboard and notifications
-// ─────────────────────────────────────────
+
 const getUpcomingEvents = async (farmerId, days = 30) => {
     const farmerCrops = await prisma.farmerCrop.findMany({
         where: {
@@ -170,12 +155,7 @@ const getUpcomingEvents = async (farmerId, days = 30) => {
     return upcoming.sort((a, b) => new Date(a.date) - new Date(b.date))
 }
 
-// ─────────────────────────────────────────
-// GET MONTHLY SUMMARY
-// Returns a summary of each month in a year
-// showing how many plantings and harvests are scheduled
-// Used to render the full year calendar view
-// ─────────────────────────────────────────
+
 const getMonthlySummary = async (farmerId, year) => {
     const y = parseInt(year) || new Date().getFullYear()
     const farmerCrops = await prisma.farmerCrop.findMany({

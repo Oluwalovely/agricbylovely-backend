@@ -8,11 +8,7 @@ import {
     createNotification,
 } from '../services/notification.service.js'
 
-// ─────────────────────────────────────────
-// GET ALL NOTIFICATIONS
-// GET /api/notifications
-// Optional filters: ?unreadOnly=true&page=1&limit=20
-// ─────────────────────────────────────────
+
 const getMyNotifications = async (req, res, next) => {
     try {
         const { page = 1, limit = 20, unreadOnly } = req.query
@@ -35,10 +31,7 @@ const getMyNotifications = async (req, res, next) => {
     }
 }
 
-// ─────────────────────────────────────────
-// MARK ONE AS READ
-// PUT /api/notifications/:id/read
-// ─────────────────────────────────────────
+
 const markOneAsRead = async (req, res, next) => {
     try {
         const notification = await markAsRead(req.params.id, req.farmer.id)
@@ -53,10 +46,7 @@ const markOneAsRead = async (req, res, next) => {
     }
 }
 
-// ─────────────────────────────────────────
-// MARK ALL AS READ
-// PUT /api/notifications/read-all
-// ─────────────────────────────────────────
+
 const markAllRead = async (req, res, next) => {
     try {
         const count = await markAllAsRead(req.farmer.id)
@@ -66,10 +56,7 @@ const markAllRead = async (req, res, next) => {
     }
 }
 
-// ─────────────────────────────────────────
-// DELETE ONE NOTIFICATION
-// DELETE /api/notifications/:id
-// ─────────────────────────────────────────
+
 const deleteOne = async (req, res, next) => {
     try {
         const notification = await deleteNotification(req.params.id, req.farmer.id)
@@ -84,10 +71,7 @@ const deleteOne = async (req, res, next) => {
     }
 }
 
-// ─────────────────────────────────────────
-// CLEAR ALL READ NOTIFICATIONS
-// DELETE /api/notifications/clear-read
-// ─────────────────────────────────────────
+
 const clearRead = async (req, res, next) => {
     try {
         const count = await clearReadNotifications(req.farmer.id)
@@ -97,12 +81,7 @@ const clearRead = async (req, res, next) => {
     }
 }
 
-// ─────────────────────────────────────────
-// TEST NOTIFICATION (Development only)
-// POST /api/notifications/test
-// Sends a test notification to confirm
-// Socket.io is working end to end
-// ─────────────────────────────────────────
+
 const sendTestNotification = async (req, res, next) => {
     try {
         

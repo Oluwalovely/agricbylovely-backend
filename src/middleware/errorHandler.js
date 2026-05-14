@@ -2,7 +2,7 @@ class AppError extends Error {
   constructor(message, statusCode = 500) {
     super(message)
     this.statusCode = statusCode
-    this.isOperational = true // marks it as a known, expected error
+    this.isOperational = true 
   }
 }
 
@@ -14,9 +14,9 @@ const errorHandler = (err, req, res, next) => {
   let message = err.message || 'Something went wrong'
   let statusCode = err.statusCode || 500
 
-  // Prisma specific errors
+  
 
-  // Unique constraint violation — e.g. email already exists
+  
   if (err.code === 'P2002') {
     const field = err.meta?.target?.[0] || 'field'
     message = `A record with this ${field} already exists`

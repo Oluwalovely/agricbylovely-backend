@@ -11,14 +11,13 @@ import { authenticate } from '../middleware/auth.js'
 
 const router = Router()
 
-// All notification routes require login
+
 router.use(authenticate)
 
-router.get('/', getMyNotifications)     // GET    /api/notifications
-router.put('/read-all', markAllRead)             // PUT    /api/notifications/read-all
-router.delete('/clear-read', clearRead)               // DELETE /api/notifications/clear-read
-router.post('/test', sendTestNotification)    // POST   /api/notifications/test
-router.put('/:id/read', markOneAsRead)           // PUT    /api/notifications/:id/read
-router.delete('/:id', deleteOne)               // DELETE /api/notifications/:id
-
+router.get('/', getMyNotifications)    
+router.put('/read-all', markAllRead)            
+router.delete('/clear-read', clearRead)               
+router.post('/test', sendTestNotification)   
+router.put('/:id/read', markOneAsRead)          
+router.delete('/:id', deleteOne)               
 export default router

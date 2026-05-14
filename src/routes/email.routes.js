@@ -11,7 +11,7 @@ import {
 
 const router = Router()
 
-// All email test routes require login
+
 router.use(authenticate)
 
 // ── Test welcome email ────────────────────
@@ -105,7 +105,7 @@ router.post('/test/weekly-digest', async (req, res, next) => {
     } catch (err) { next(err) }
 })
 
-// ── Get email logs ────────────────────────
+
 router.get('/logs', async (req, res, next) => {
     try {
         const logs = await prisma.emailLog.findMany({

@@ -5,12 +5,7 @@ import {
     getMonthlySummary,
 } from '../services/calendar.service.js'
 
-// ─────────────────────────────────────────
-// GET CALENDAR EVENTS
-// GET /api/calendar
-// Returns all planting and harvest events
-// Optional filters: ?month=5&year=2026
-// ─────────────────────────────────────────
+
 const getEvents = async (req, res, next) => {
     try {
         const { month, year } = req.query
@@ -28,13 +23,7 @@ const getEvents = async (req, res, next) => {
     }
 }
 
-// ─────────────────────────────────────────
-// GET UPCOMING EVENTS
-// GET /api/calendar/upcoming
-// Returns harvests due in the next 30 days
-// Used for the dashboard and notifications
-// Optional: ?days=7 to change the window
-// ─────────────────────────────────────────
+
 const getUpcoming = async (req, res, next) => {
     try {
         const days = req.query.days ? parseInt(req.query.days) : 30
@@ -51,13 +40,7 @@ const getUpcoming = async (req, res, next) => {
     }
 }
 
-// ─────────────────────────────────────────
-// GET MONTHLY SUMMARY
-// GET /api/calendar/summary
-// Returns planting and harvest counts per month
-// Used for the year-view calendar
-// Optional: ?year=2026
-// ─────────────────────────────────────────
+
 const getSummary = async (req, res, next) => {
     try {
         const year = req.query.year || new Date().getFullYear()

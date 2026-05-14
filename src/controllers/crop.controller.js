@@ -3,12 +3,7 @@ import { success, fail } from '../utils/response.js'
 import { searchPerenual } from '../services/perenual.service.js'
 import { fillCropDetails } from '../services/aifiller.service.js'
 
-// ─────────────────────────────────────────
-// GET ALL CROPS
-// GET /api/crops
-// Supports search and category filter
-// e.g. /api/crops?q=tomato&category=VEGETABLE
-// ─────────────────────────────────────────
+
 const getAllCrops = async (req, res, next) => {
     try {
         const { q, category, page = 1, limit = 20 } = req.query
@@ -40,7 +35,7 @@ const getAllCrops = async (req, res, next) => {
             prisma.crop.count({ where }),
         ])
 
-        // ── External API fallback ──────────────
+        // External API fallback 
         // If nothing found locally and farmer searched for something,
         // try Perenual then fill gaps with AI
         if (crops.length === 0 && q) {
@@ -101,10 +96,7 @@ const getAllCrops = async (req, res, next) => {
     }
 }
 
-// ─────────────────────────────────────────
-// GET ONE CROP
-// GET /api/crops/:id
-// ─────────────────────────────────────────
+
 const getCropById = async (req, res, next) => {
     try {
         const crop = await prisma.crop.findUnique({
@@ -121,10 +113,8 @@ const getCropById = async (req, res, next) => {
     }
 }
 
-// ─────────────────────────────────────────
-// GET CROP CATEGORIES
-// GET /api/crops/categories
-// ─────────────────────────────────────────
+
+
 const getCropCategories = async (req, res, next) => {
     try {
         const categories = await prisma.crop.groupBy({
@@ -144,10 +134,7 @@ const getCropCategories = async (req, res, next) => {
     }
 }
 
-// ─────────────────────────────────────────
-// PLANT A CROP
-// POST /api/crops/:id/plant
-// ─────────────────────────────────────────
+
 const plantCrop = async (req, res, next) => {
     try {
         const { plantedAt, fieldId, notes, quantity } = req.body
@@ -183,10 +170,7 @@ const plantCrop = async (req, res, next) => {
     }
 }
 
-// ─────────────────────────────────────────
-// GET MY CROPS
-// GET /api/crops/my-crops
-// ─────────────────────────────────────────
+
 const getMyCrops = async (req, res, next) => {
     try {
         const farmerCrops = await prisma.farmerCrop.findMany({
@@ -201,10 +185,7 @@ const getMyCrops = async (req, res, next) => {
     }
 }
 
-// ─────────────────────────────────────────
-// UPDATE MY CROP
-// PUT /api/crops/my-crops/:id
-// ─────────────────────────────────────────
+
 const updateMyCrop = async (req, res, next) => {
     try {
         const { stage, notes, yieldKg, harvestedAt } = req.body
@@ -235,10 +216,7 @@ const updateMyCrop = async (req, res, next) => {
     }
 }
 
-// ─────────────────────────────────────────
-// REMOVE MY CROP
-// DELETE /api/crops/my-crops/:id
-// ─────────────────────────────────────────
+
 const removeMyCrop = async (req, res, next) => {
     try {
         const existing = await prisma.farmerCrop.findFirst({

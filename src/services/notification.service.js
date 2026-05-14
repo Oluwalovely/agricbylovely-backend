@@ -1,16 +1,5 @@
 import prisma from '../config/prisma.js'
 
-// ─────────────────────────────────────────
-// NOTIFICATION SERVICE
-// Creates, fetches and manages notifications
-// Also handles real-time push via Socket.io
-// ─────────────────────────────────────────
-
-// io is the Socket.io instance from index.js
-// We pass it in when calling createNotification
-// so we can push live to the farmer's screen
-
-// ── Create a notification ─────────────────
 // Saves to database AND pushes live via Socket.io
 const createNotification = async (farmerId, { type, title, message }, io = null) => {
     // Save notification to database
@@ -35,7 +24,7 @@ const createNotification = async (farmerId, { type, title, message }, io = null)
     return notification
 }
 
-// ── Create multiple notifications at once ─
+// Create multiple notifications at once
 // Used by the job scheduler to alert many farmers
 const createManyNotifications = async (notifications, io = null) => {
     const created = []
@@ -48,7 +37,7 @@ const createManyNotifications = async (notifications, io = null) => {
     return created
 }
 
-// ── Get all notifications for a farmer ────
+//  Get all notifications for a farmer 
 const getNotifications = async (farmerId, { page = 1, limit = 20, unreadOnly = false } = {}) => {
     const where = { farmerId }
 
@@ -71,7 +60,7 @@ const getNotifications = async (farmerId, { page = 1, limit = 20, unreadOnly = f
     return { notifications, total, unreadCount }
 }
 
-// ── Mark one notification as read ─────────
+//  Mark one notification as read 
 const markAsRead = async (notificationId, farmerId) => {
     // Make sure notification belongs to this farmer
     const existing = await prisma.notification.findFirst({
@@ -86,7 +75,7 @@ const markAsRead = async (notificationId, farmerId) => {
     })
 }
 
-// ── Mark all notifications as read ────────
+//  Mark all notifications as read
 const markAllAsRead = async (farmerId) => {
     const result = await prisma.notification.updateMany({
         where: { farmerId, isRead: false },
@@ -95,7 +84,7 @@ const markAllAsRead = async (farmerId) => {
     return result.count // number of notifications marked as read
 }
 
-// ── Delete a notification ─────────────────
+
 const deleteNotification = async (notificationId, farmerId) => {
     const existing = await prisma.notification.findFirst({
         where: { id: notificationId, farmerId },
@@ -105,8 +94,6 @@ const deleteNotification = async (notificationId, farmerId) => {
     return prisma.notification.delete({ where: { id: notificationId } })
 }
 
-// ── Delete all read notifications ─────────
-// Keeps inbox clean — farmers can clear old alerts
 const clearReadNotifications = async (farmerId) => {
     const result = await prisma.notification.deleteMany({
         where: { farmerId, isRead: true },
@@ -114,7 +101,7 @@ const clearReadNotifications = async (farmerId) => {
     return result.count
 }
 
-// ── Send weather alerts as notifications ──
+// Send weather alerts as notifications 
 // Called by the daily weather check job
 // Checks weather alerts and creates notifications for each
 const sendWeatherAlertNotifications = async (farmerId, weatherAlerts, io = null) => {
@@ -130,7 +117,7 @@ const sendWeatherAlertNotifications = async (farmerId, weatherAlerts, io = null)
     return createManyNotifications(notifications, io)
 }
 
-// ── Send harvest reminder notification ────
+
 // Called when harvest is 7 days, 3 days or 1 day away
 const sendHarvestReminder = async (farmerId, cropName, daysLeft, io = null) => {
     const urgency = daysLeft === 1 ? 'tomorrow' :

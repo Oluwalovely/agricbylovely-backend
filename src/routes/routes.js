@@ -10,6 +10,7 @@ import calendarRouter      from './calendar.routes.js'
 import notificationRouter  from './notification.routes.js'
 import emailRouter         from './email.routes.js'
 import jobsRouter          from './jobs.routes.js'
+import reportRouter        from './report.routes.js'
 
 const router = Router()
 
@@ -24,8 +25,6 @@ router.use('/calendar',      calendarRouter)
 router.use('/notifications', notificationRouter)
 router.use('/email',         emailRouter)
 router.use('/jobs',          jobsRouter)
-
-// Coming tomorrow:
-// router.use('/reports', reportRouter)
+router.use('/reports',       reportRouter)
 
 export default router

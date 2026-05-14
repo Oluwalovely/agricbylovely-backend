@@ -1,14 +1,7 @@
 import { v2 as cloudinary } from 'cloudinary'
 import '../config/cloudinary.js' // ensure cloudinary is configured
 
-// ─────────────────────────────────────────
-// UPLOAD SERVICE
-// Handles all image uploads to Cloudinary
-// Each upload type has its own folder and settings
-// ─────────────────────────────────────────
 
-// Upload a farmer's profile avatar
-// Stored in: agricbylovely/avatars/
 const uploadAvatar = async (fileBuffer, farmerId) => {
     return new Promise((resolve, reject) => {
         const uploadStream = cloudinary.uploader.upload_stream(
@@ -30,8 +23,7 @@ const uploadAvatar = async (fileBuffer, farmerId) => {
     })
 }
 
-// Upload a photo for a farm field
-// Stored in: agricbylovely/fields/
+
 const uploadFieldPhoto = async (fileBuffer, fieldId) => {
     return new Promise((resolve, reject) => {
         const uploadStream = cloudinary.uploader.upload_stream(
@@ -52,8 +44,7 @@ const uploadFieldPhoto = async (fileBuffer, fieldId) => {
     })
 }
 
-// Upload a photo for a farmer's crop
-// Stored in: agricbylovely/crops/
+
 const uploadCropPhoto = async (fileBuffer, farmerCropId) => {
     return new Promise((resolve, reject) => {
         const uploadStream = cloudinary.uploader.upload_stream(
@@ -74,8 +65,7 @@ const uploadCropPhoto = async (fileBuffer, farmerCropId) => {
     })
 }
 
-// Delete an image from Cloudinary by its URL
-// Used when farmer deletes their account or removes a photo
+
 const deleteImage = async (imageUrl) => {
     try {
         // Extract the public_id from the URL

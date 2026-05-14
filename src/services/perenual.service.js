@@ -1,17 +1,10 @@
 import axios from 'axios'
 import { env } from '../config/env.js'
 
-// ─────────────────────────────────────────
-// PERENUAL SERVICE
-// Fetches plant data from Perenual API
-// Best for: flowers, ornamental plants, vegetables
-// Free tier: 300 requests/day
-// Get your key at: https://perenual.com/docs/api
-// ─────────────────────────────────────────
 
 const PERENUAL_URL = 'https://perenual.com/api/species-list'
 
-// Guesses crop category from its common name
+
 const guessCategory = (name = '') => {
   const lower = name.toLowerCase()
 
@@ -29,10 +22,10 @@ const guessCategory = (name = '') => {
   if (tubers.some(t => lower.includes(t)))     return 'TUBER'
   if (legumes.some(l => lower.includes(l)))    return 'LEGUME'
 
-  return 'FLOWER' // default for ornamental plants
+  return 'FLOWER' 
 }
 
-// Maps Perenual sunlight — handles both string and array
+
 const mapSunlight = (sunlight) => {
   if (!sunlight) return 'FULL_SUN'
 
@@ -45,7 +38,7 @@ const mapSunlight = (sunlight) => {
   return 'FULL_SUN'
 }
 
-// Maps Perenual watering string to mm per week
+
 const mapWaterNeeds = (watering) => {
   if (!watering) return null
   const lower = watering.toLowerCase()
@@ -56,15 +49,15 @@ const mapWaterNeeds = (watering) => {
   return null
 }
 
-// Maps Perenual data to our database shape
+
 const mapPerenualCrop = (item) => {
   return {
     name:             item.common_name || 'Unknown',
     botanicalName:    item.scientific_name?.[0] || null,
     category:         guessCategory(item.common_name),
-    description:      null, // will be filled by AI gap filler
+    description:      null, 
     imageUrl:         item.default_image?.regular_url || null,
-    daysToHarvest:    null, // will be filled by AI gap filler
+    daysToHarvest:    null, 
     plantingDepthCm:  null,
     spacingCm:        null,
     sunlight:         mapSunlight(item.sunlight),
@@ -72,13 +65,13 @@ const mapPerenualCrop = (item) => {
     soilTypes:        [],
     companionPlants:  [],
     pestsAndDiseases: [],
-    plantingMonths:   [], // will be filled by AI gap filler
+    plantingMonths:   [], 
     harvestMonths:    [],
     waterNeedsMm:     mapWaterNeeds(item.watering),
   }
 }
 
-// Main function — search Perenual for a plant by name
+
 const searchPerenual = async (query) => {
   if (!env.PERENUAL_API_KEY) {
     console.log('Perenual API key not set — skipping')

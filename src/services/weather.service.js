@@ -2,15 +2,10 @@ import axios from 'axios'
 import prisma from '../config/prisma.js'
 import { env } from '../config/env.js'
 
-// ─────────────────────────────────────────
-// WEATHER SERVICE
-// Fetches weather data from OpenWeatherMap
-// Caches results in the database for 1 hour
-// ─────────────────────────────────────────
 
 const BASE_URL = 'https://api.openweathermap.org/data/2.5'
 
-// ── Cache check ───────────────────────────
+
 const getCachedWeather = async (latitude, longitude) => {
     const snapshot = await prisma.weatherSnapshot.findUnique({
         where: { latitude_longitude: { latitude, longitude } }
@@ -21,7 +16,7 @@ const getCachedWeather = async (latitude, longitude) => {
     return snapshot.data
 }
 
-// ── Save to cache ─────────────────────────
+
 const saveToCache = async (latitude, longitude, data) => {
     await prisma.weatherSnapshot.upsert({
         where: { latitude_longitude: { latitude, longitude } },
@@ -30,7 +25,7 @@ const saveToCache = async (latitude, longitude, data) => {
     })
 }
 
-// ── Fetch current weather ─────────────────
+
 const fetchCurrentWeather = async (latitude, longitude) => {
     const response = await axios.get(`${BASE_URL}/weather`, {
         params: { lat: latitude, lon: longitude, appid: env.OPENWEATHER_API_KEY, units: 'metric' },
@@ -39,7 +34,7 @@ const fetchCurrentWeather = async (latitude, longitude) => {
     return response.data
 }
 
-// ── Fetch 5-day forecast ──────────────────
+
 const fetchForecast = async (latitude, longitude) => {
     const response = await axios.get(`${BASE_URL}/forecast`, {
         params: { lat: latitude, lon: longitude, appid: env.OPENWEATHER_API_KEY, units: 'metric' },
@@ -48,7 +43,7 @@ const fetchForecast = async (latitude, longitude) => {
     return response.data
 }
 
-// ── Format forecast into daily summaries ──
+
 const formatDailyForecast = (forecastData) => {
     const days = {}
 
@@ -82,11 +77,7 @@ const formatDailyForecast = (forecastData) => {
     }))
 }
 
-// ─────────────────────────────────────────
-// DETECT FARMING ZONE FROM COORDINATES
-// Nigeria has 4 agro-ecological zones
-// Each has different planting seasons and crops
-// ─────────────────────────────────────────
+
 const getFarmingZone = (latitude) => {
     if (latitude < 5.5) return 'SOUTH_SOUTH'    // Rivers, Delta, Bayelsa, Cross River, Akwa Ibom
     if (latitude < 7.5) return 'SOUTH_WEST_EAST' // Lagos, Ogun, Oyo, Imo, Anambra, Enugu
@@ -102,11 +93,7 @@ const ZONE_NAMES = {
     FAR_NORTH: 'Far North',
 }
 
-// ─────────────────────────────────────────
-// NIGERIAN FARMING ALERTS
-// Rules based on Nigerian climate, crop
-// conditions and zone-specific seasons
-// ─────────────────────────────────────────
+
 const generateWeatherAlerts = (current, forecast, latitude) => {
     const alerts = []
     const temp = current.main.temp
@@ -116,7 +103,7 @@ const generateWeatherAlerts = (current, forecast, latitude) => {
     const zone = getFarmingZone(latitude)
     const zoneName = ZONE_NAMES[zone]
 
-    // ── TEMPERATURE ALERTS ───────────────────
+    // TEMPERATURE ALERTS 
 
     if (temp > 38) {
         alerts.push({
@@ -142,7 +129,7 @@ const generateWeatherAlerts = (current, forecast, latitude) => {
         })
     }
 
-    // ── HUMIDITY ALERTS ──────────────────────
+    // HUMIDITY ALERTS 
 
     if (humidity > 85) {
         alerts.push({
@@ -152,7 +139,7 @@ const generateWeatherAlerts = (current, forecast, latitude) => {
         })
     }
 
-    // ── HARMATTAN ALERTS ─────────────────────
+    // HARMATTAN ALERTS 
     // November to March — dry dusty winds from the Sahara
     // Affects the north more severely than the south
 
@@ -172,7 +159,7 @@ const generateWeatherAlerts = (current, forecast, latitude) => {
         })
     }
 
-    // ── RAINFALL ALERTS ──────────────────────
+    // RAINFALL ALERTS 
 
     forecast.forEach(day => {
         if (day.rainfallMm > 30) {
@@ -190,9 +177,9 @@ const generateWeatherAlerts = (current, forecast, latitude) => {
         }
     })
 
-    // ── ZONE-BASED PLANTING SEASON ALERTS ────
+    // ZONE-BASED PLANTING SEASON ALERTS 
 
-    // ── SOUTH-SOUTH (Niger Delta) ─────────────
+    // SOUTH-SOUTH (Niger Delta)
     // Rain almost year round — two planting peaks
     if (zone === 'SOUTH_SOUTH') {
         if (month === 2) {
@@ -225,7 +212,7 @@ const generateWeatherAlerts = (current, forecast, latitude) => {
         }
     }
 
-    // ── SOUTH-WEST / SOUTH-EAST ───────────────
+    // SOUTH-WEST / SOUTH-EAST 
     // Two distinct rainy seasons
     if (zone === 'SOUTH_WEST_EAST') {
         if (month === 3) {
@@ -272,7 +259,7 @@ const generateWeatherAlerts = (current, forecast, latitude) => {
         }
     }
 
-    // ── MIDDLE BELT ───────────────────────────
+    // MIDDLE BELT 
     // One long rainy season — April to October
     if (zone === 'MIDDLE_BELT') {
         if (month === 4) {
@@ -312,7 +299,7 @@ const generateWeatherAlerts = (current, forecast, latitude) => {
         }
     }
 
-    // ── FAR NORTH ─────────────────────────────
+    // FAR NORTH 
     // One short rainy season — May/June to September
     // Dry season farming (fadama) possible near rivers
     if (zone === 'FAR_NORTH') {
@@ -360,7 +347,7 @@ const generateWeatherAlerts = (current, forecast, latitude) => {
         }
     }
 
-    // ── WIND ALERTS ──────────────────────────
+    // WIND ALERTS 
 
     if (wind > 10) {
         alerts.push({
@@ -378,7 +365,7 @@ const generateWeatherAlerts = (current, forecast, latitude) => {
         })
     }
 
-    // ── PEST RISK ALERTS ─────────────────────
+    // PEST RISK ALERTS 
 
     // Fall armyworm — peak risk in warm humid conditions
     if (temp > 25 && humidity > 60 && [4, 5, 6, 7, 8, 9].includes(month)) {
@@ -410,7 +397,7 @@ const generateWeatherAlerts = (current, forecast, latitude) => {
     return alerts
 }
 
-// ── Main function ─────────────────────────
+
 const getWeatherForLocation = async (latitude, longitude) => {
     const lat = parseFloat(latitude.toFixed(2))
     const lon = parseFloat(longitude.toFixed(2))
