@@ -3,7 +3,7 @@ import cors from 'cors'
 import helmet from 'helmet'
 import rateLimit from 'express-rate-limit'
 import { env } from './config/env.js'
-import router from './routes/index.js'
+import router from './routes/routes.js'
 import { notFound, errorHandler } from './middleware/errorHandler.js'
 import { sanitize } from './middleware/sanitize.js'
 

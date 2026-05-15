@@ -25,6 +25,8 @@ model Farmer {
   country      String   @default("Nigeria")
   avatarUrl    String?  // profile photo from Cloudinary
   refreshToken String?  // stored to validate refresh token requests
+  passwordResetToken  String?   // random token sent in the reset email
+  passwordResetExpiry DateTime? // token expires after 1 hour
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
