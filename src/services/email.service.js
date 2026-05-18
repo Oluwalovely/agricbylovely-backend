@@ -287,10 +287,51 @@ const sendWeeklyDigestEmail = async (farmer, data) => {
     })
 }
 
+// Password reset email template
+const resetPasswordTemplate = (farmer, resetUrl) => ({
+  subject: 'Reset your AgricbyLovely password',
+  html: `
+    <!DOCTYPE html><html><head><style>${styles}</style></head>
+    <body><div class="wrapper">
+      <div class="header">
+        <h1>AgricbyLovely</h1>
+        <p>Password Reset Request</p>
+      </div>
+      <div class="body">
+        <h2>Hi ${farmer.firstName},</h2>
+        <p>We received a request to reset your password. Click the button below to set a new password:</p>
+        <a href="${resetUrl}" class="btn">Reset My Password</a>
+        <div class="highlight">
+          <p>This link expires in 1 hour. If you did not request a password reset, ignore this email — your account is safe.</p>
+        </div>
+        <p>If the button does not work, copy and paste this link into your browser:</p>
+        <p style="word-break:break-all;font-size:13px;color:#639922;">${resetUrl}</p>
+      </div>
+      <div class="footer">
+        <p>AgricbyLovely — Smart Farming Intelligence</p>
+      </div>
+    </div></body></html>
+  `,
+})
+
+// Send password reset email
+const sendPasswordResetEmail = async (farmer, resetUrl) => {
+  const { subject, html } = resetPasswordTemplate(farmer, resetUrl)
+  return sendEmail({
+    to:       farmer.email,
+    subject,
+    html,
+    farmerId: farmer.id,
+    template: 'password-reset',
+  })
+}
+
+
 export {
     sendEmail,
     sendWelcomeEmail,
     sendWeatherAlertEmail,
     sendHarvestReminderEmail,
     sendWeeklyDigestEmail,
+    sendPasswordResetEmail
 }
