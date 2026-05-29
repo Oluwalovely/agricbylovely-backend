@@ -8,7 +8,7 @@ const getDashboard = async (req, res, next) => {
     try {
         const farmerId = req.farmer.id
 
-        // Run all database queries at the same time for speed
+        
         const [
             farmer,
             activeCrops,
@@ -18,7 +18,7 @@ const getDashboard = async (req, res, next) => {
             jobStats,
         ] = await Promise.all([
 
-            // Farmer profile
+            
             prisma.farmer.findUnique({
                 where: { id: farmerId },
                 select: {
@@ -29,7 +29,7 @@ const getDashboard = async (req, res, next) => {
                 },
             }),
 
-            // Active crops with details
+            
             prisma.farmerCrop.findMany({
                 where: { farmerId, harvestedAt: null },
                 include: { crop: true, field: true },
@@ -37,7 +37,7 @@ const getDashboard = async (req, res, next) => {
                 take: 6, // show max 6 on dashboard
             }),
 
-            // Fields summary
+            
             prisma.field.findMany({
                 where: { farmerId },
                 select: {
@@ -46,17 +46,17 @@ const getDashboard = async (req, res, next) => {
                 },
             }),
 
-            // Recent notifications — unread first
+            
             prisma.notification.findMany({
                 where: { farmerId },
                 orderBy: [{ isRead: 'asc' }, { createdAt: 'desc' }],
                 take: 5,
             }),
 
-            // Upcoming harvests in next 30 days
+            
             getUpcomingEvents(farmerId, 30),
 
-            // Job stats — how many jobs ran today
+            
             prisma.job.groupBy({
                 by: ['status'],
                 where: {
@@ -69,7 +69,7 @@ const getDashboard = async (req, res, next) => {
             }),
         ])
 
-        // ── Weather (optional — only if farmer has location) ──
+        
         let weather = null
         if (farmer.latitude && farmer.longitude) {
             try {
@@ -80,15 +80,15 @@ const getDashboard = async (req, res, next) => {
             }
         }
 
-        // ── Calculate stats ───────────────────
+        
         const totalHectares = fields.reduce((sum, f) => sum + (f.sizeHa || 0), 0)
         const unreadCount = recentNotifications.filter(n => !n.isRead).length
 
-        // Next harvest — the soonest upcoming event
+        
         const nextHarvest = upcomingEvents.find(e => e.type === 'HARVEST') || null
         const overdueCount = upcomingEvents.filter(e => e.type === 'OVERDUE').length
 
-        // Growth progress for each active crop
+        
         const cropsWithProgress = activeCrops.map(fc => {
             const planted = new Date(fc.plantedAt)
             const harvest = fc.expectedHarvestAt ? new Date(fc.expectedHarvestAt) : null
@@ -114,7 +114,7 @@ const getDashboard = async (req, res, next) => {
             }
         })
 
-        // Format job stats into a simple object
+        
         const jobs = { done: 0, failed: 0, running: 0 }
         jobStats.forEach(s => {
             jobs[s.status.toLowerCase()] = s._count.status
@@ -123,7 +123,7 @@ const getDashboard = async (req, res, next) => {
         res.json(success({
             farmer,
 
-            // Stats summary for the top cards
+            
             stats: {
                 totalActiveCrops: activeCrops.length,
                 totalFields: fields.length,
@@ -133,16 +133,16 @@ const getDashboard = async (req, res, next) => {
                 overdueHarvests: overdueCount,
             },
 
-            // Active crops with progress
+            
             activeCrops: cropsWithProgress,
 
-            // Fields
+            
             fields,
 
-            // Next harvest for the countdown widget
+            
             nextHarvest,
 
-            // Weather snapshot
+            
             weather: weather ? {
                 temp: weather.current.temp,
                 humidity: weather.current.humidity,
@@ -154,13 +154,13 @@ const getDashboard = async (req, res, next) => {
                 zone: weather.location.zoneName,
             } : null,
 
-            // Recent notifications
+            
             notifications: recentNotifications,
 
-            // Upcoming harvests
+            
             upcomingEvents: upcomingEvents.slice(0, 5),
 
-            // Background job status for today
+            
             jobsToday: jobs,
 
         }, 'Dashboard data fetched successfully'))
@@ -185,33 +185,33 @@ const getFarmSummary = async (req, res, next) => {
             recentActivity,
         ] = await Promise.all([
 
-            // Total crops ever planted
+            
             prisma.farmerCrop.count({ where: { farmerId } }),
 
-            // Currently active
+            
             prisma.farmerCrop.count({ where: { farmerId, harvestedAt: null } }),
 
-            // Successfully harvested
+            
             prisma.farmerCrop.count({ where: { farmerId, harvestedAt: { not: null } } }),
 
-            // Total fields
+            
             prisma.field.count({ where: { farmerId } }),
 
-            // Crops grouped by category
+            
             prisma.farmerCrop.groupBy({
                 by: ['cropId'],
                 where: { farmerId },
                 _count: { cropId: true },
             }),
 
-            // Active crops grouped by growth stage
+            
             prisma.farmerCrop.groupBy({
                 by: ['stage'],
                 where: { farmerId, harvestedAt: null },
                 _count: { stage: true },
             }),
 
-            // Last 10 activities
+            
             prisma.farmerCrop.findMany({
                 where: { farmerId },
                 include: { crop: true, field: true },
@@ -220,7 +220,7 @@ const getFarmSummary = async (req, res, next) => {
             }),
         ])
 
-        // Format stage breakdown
+        
         const stageBreakdown = cropsByStage.map(s => ({
             stage: s.stage,
             count: s._count.stage,
@@ -270,7 +270,7 @@ const getHarvestHistory = async (req, res, next) => {
             }),
         ])
 
-        // Calculate total yield
+        
         const totalYieldKg = harvested.reduce((sum, fc) => sum + (fc.yieldKg || 0), 0)
 
         res.json(success({

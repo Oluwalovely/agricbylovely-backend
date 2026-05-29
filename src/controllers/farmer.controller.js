@@ -20,7 +20,7 @@ const getProfile = async (req, res, next) => {
                 country: true,
                 avatarUrl: true,
                 createdAt: true,
-                // also return a count of their fields and active crops
+                
                 _count: {
                     select: {
                         fields: true,

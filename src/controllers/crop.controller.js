@@ -8,7 +8,7 @@ const getAllCrops = async (req, res, next) => {
     try {
         const { q, category, page = 1, limit = 20 } = req.query
 
-        // Build the filter object based on what was sent
+        
         const where = {}
 
         if (q) {
@@ -35,9 +35,7 @@ const getAllCrops = async (req, res, next) => {
             prisma.crop.count({ where }),
         ])
 
-        // External API fallback 
-        // If nothing found locally and farmer searched for something,
-        // try Perenual then fill gaps with AI
+        
         if (crops.length === 0 && q) {
             console.log(`"${q}" not found locally — searching Perenual...`)
 
@@ -48,16 +46,16 @@ const getAllCrops = async (req, res, next) => {
                 const saved = []
 
                 for (const crop of perenualResults) {
-                    // Check if crop already exists before saving
+                    
                     const exists = await prisma.crop.findFirst({
                         where: { name: { equals: crop.name, mode: 'insensitive' } },
                     })
 
                     if (!exists) {
-                        // Save the crop first with whatever Perenual gave us
+                        
                         const newCrop = await prisma.crop.create({ data: crop })
 
-                        // Then immediately fill missing details using AI
+                        
                         const enriched = await fillCropDetails(newCrop)
                         saved.push(enriched)
                     }
@@ -74,7 +72,7 @@ const getAllCrops = async (req, res, next) => {
                 }, 'Crops fetched and enriched from external source'))
             }
 
-            // Nothing found anywhere
+            
             return res.json(success({
                 crops: [],
                 total: 0,

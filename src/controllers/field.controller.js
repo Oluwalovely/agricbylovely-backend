@@ -31,11 +31,11 @@ const getMyFields = async (req, res, next) => {
             where: { farmerId: req.farmer.id },
             orderBy: { createdAt: 'asc' },
             include: {
-                // include count of crops planted in each field
+                
                 _count: {
                     select: { farmerCrops: true }
                 },
-                // include the active crops in this field
+                
                 farmerCrops: {
                     where: { harvestedAt: null }, // only active crops
                     include: { crop: true },
@@ -81,7 +81,7 @@ const updateField = async (req, res, next) => {
     try {
         const { name, sizeHa, soilType, latitude, longitude, notes } = req.body
 
-        // Make sure the field belongs to this farmer
+        
         const existing = await prisma.field.findFirst({
             where: { id: req.params.id, farmerId: req.farmer.id }
         })
@@ -90,7 +90,7 @@ const updateField = async (req, res, next) => {
             return res.status(404).json(fail('Field not found'))
         }
 
-        // Only update fields that were sent in the request
+        
         const updateData = {}
         if (name !== undefined) updateData.name = name
         if (soilType !== undefined) updateData.soilType = soilType
@@ -146,7 +146,7 @@ const getFieldSummary = async (req, res, next) => {
             }
         })
 
-        // Calculate totals
+        
         const totalFields = fields.length
         const totalHectares = fields.reduce((sum, f) => sum + (f.sizeHa || 0), 0)
         const totalActiveCrops = fields.reduce((sum, f) => sum + f._count.farmerCrops, 0)

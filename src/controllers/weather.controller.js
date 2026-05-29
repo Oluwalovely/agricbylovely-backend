@@ -5,13 +5,13 @@ import { getWeatherForLocation } from '../services/weather.service.js'
 
 const getMyWeather = async (req, res, next) => {
     try {
-        // Get the farmer's saved location
+        
         const farmer = await prisma.farmer.findUnique({
             where: { id: req.farmer.id },
             select: { latitude: true, longitude: true, state: true },
         })
 
-        // If farmer has not set their location yet
+        
         if (!farmer.latitude || !farmer.longitude) {
             return res.status(400).json(fail(
                 'Please update your farm location first. Go to your profile and add your latitude and longitude.'
@@ -22,7 +22,7 @@ const getMyWeather = async (req, res, next) => {
 
         res.json(success({ weather }, 'Weather fetched successfully'))
     } catch (err) {
-        // If OpenWeatherMap is down or key is invalid
+        
         if (err.response?.status === 401) {
             return res.status(500).json(fail('Weather service is not configured correctly. Please check the API key.'))
         }

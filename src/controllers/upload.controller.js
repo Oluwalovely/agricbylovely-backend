@@ -10,26 +10,26 @@ import {
 
 const uploadFarmerAvatar = async (req, res, next) => {
     try {
-        // req.file is set by multer middleware
+        
         if (!req.file) {
             return res.status(400).json(fail('Please select an image to upload'))
         }
 
-        // Get current avatar URL so we can delete the old one
+        
         const farmer = await prisma.farmer.findUnique({
             where: { id: req.farmer.id },
             select: { avatarUrl: true },
         })
 
-        // Upload new avatar to Cloudinary
+        
         const avatarUrl = await uploadAvatar(req.file.buffer, req.farmer.id)
 
-        // Delete old avatar from Cloudinary if one exists
+        
         if (farmer.avatarUrl) {
             await deleteImage(farmer.avatarUrl)
         }
 
-        // Save new URL to the database
+        
         await prisma.farmer.update({
             where: { id: req.farmer.id },
             data: { avatarUrl },
@@ -50,7 +50,7 @@ const uploadFieldImage = async (req, res, next) => {
 
         const { fieldId } = req.params
 
-        // Make sure this field belongs to the logged-in farmer
+        
         const field = await prisma.field.findFirst({
             where: { id: fieldId, farmerId: req.farmer.id },
         })
@@ -59,10 +59,10 @@ const uploadFieldImage = async (req, res, next) => {
             return res.status(404).json(fail('Field not found'))
         }
 
-        // Upload photo to Cloudinary
+        
         const photoUrl = await uploadFieldPhoto(req.file.buffer, fieldId)
 
-        // Save the photo URL to the field record
+        
         const updated = await prisma.field.update({
             where: { id: fieldId },
             data: { notes: field.notes }, // keep notes, just add photo URL
@@ -83,7 +83,7 @@ const uploadCropImage = async (req, res, next) => {
 
         const { farmerCropId } = req.params
 
-        // Make sure this farmerCrop belongs to the logged-in farmer
+        
         const farmerCrop = await prisma.farmerCrop.findFirst({
             where: { id: farmerCropId, farmerId: req.farmer.id },
         })
@@ -92,7 +92,7 @@ const uploadCropImage = async (req, res, next) => {
             return res.status(404).json(fail('Crop record not found'))
         }
 
-        // Upload photo to Cloudinary
+        
         const photoUrl = await uploadCropPhoto(req.file.buffer, farmerCropId)
 
         res.json(success({ photoUrl }, 'Crop photo uploaded successfully'))
@@ -113,10 +113,10 @@ const deleteFarmerAvatar = async (req, res, next) => {
             return res.status(400).json(fail('No profile photo to delete'))
         }
 
-        // Delete from Cloudinary
+        
         await deleteImage(farmer.avatarUrl)
 
-        // Remove URL from database
+        
         await prisma.farmer.update({
             where: { id: req.farmer.id },
             data: { avatarUrl: null },
