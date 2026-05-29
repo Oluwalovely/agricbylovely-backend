@@ -15,12 +15,13 @@ const router = Router()
 
 router.get('/', getAllCrops)    
 router.get('/categories', getCropCategories) 
-router.get('/:id', getCropById)      
-
-
-router.post('/:id/plant', authenticate, plantCrop)  
 router.get('/my-crops', authenticate, getMyCrops)
 router.put('/my-crops/:id', authenticate, updateMyCrop)
 router.delete('/my-crops/:id', authenticate, removeMyCrop)
+
+
+router.get('/:id', getCropById)      
+router.post('/:id/plant', authenticate, plantCrop)  
+
 
 export default router
