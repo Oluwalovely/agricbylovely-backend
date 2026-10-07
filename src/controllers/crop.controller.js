@@ -1,5 +1,7 @@
 import prisma from '../config/prisma.js'
 import { success, fail } from '../utils/response.js'
+import { cropUpdate } from '../utils/cropLifecycle.js'
+import { AppError } from '../middleware/errorHandler.js'
 
 
 const getAllCrops = async (req, res, next) => {
@@ -147,8 +149,6 @@ const getMyCrops = async (req, res, next) => {
 
 const updateMyCrop = async (req, res, next) => {
     try {
-        const { stage, notes, yieldKg, harvestedAt } = req.body
-
         const existing = await prisma.farmerCrop.findFirst({
             where: { id: req.params.id, farmerId: req.farmer.id },
         })
@@ -157,21 +157,17 @@ const updateMyCrop = async (req, res, next) => {
             return res.status(404).json(fail('Crop record not found'))
         }
 
-        const updateData = {}
-        if (stage !== undefined) updateData.stage = stage
-        if (notes !== undefined) updateData.notes = notes
-        if (yieldKg !== undefined) updateData.yieldKg = parseFloat(yieldKg)
-        if (harvestedAt !== undefined) updateData.harvestedAt = new Date(harvestedAt)
+        const updateData = cropUpdate(existing, req.body)
 
         const farmerCrop = await prisma.farmerCrop.update({
-            where: { id: req.params.id },
+            where: { id: req.params.id, farmerId: req.farmer.id, updatedAt: existing.updatedAt },
             data: updateData,
             include: { crop: true, field: true },
         })
 
         res.json(success({ farmerCrop }, 'Crop updated successfully'))
     } catch (err) {
-        next(err)
+        next(err.code === 'P2025' ? new AppError('This planting changed while saving. Refresh the list and try again.', 409) : err)
     }
 }
 
@@ -186,7 +182,7 @@ const removeMyCrop = async (req, res, next) => {
             return res.status(404).json(fail('Crop record not found'))
         }
 
-        await prisma.farmerCrop.delete({ where: { id: req.params.id } })
+        await prisma.farmerCrop.delete({ where: { id: req.params.id, farmerId: req.farmer.id } })
 
         res.json(success({}, 'Crop removed successfully'))
     } catch (err) {

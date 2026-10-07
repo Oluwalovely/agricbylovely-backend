@@ -1,5 +1,6 @@
 import prisma from '../config/prisma.js'
 import { success } from '../utils/response.js'
+import { daysBetween } from '../utils/cropLifecycle.js'
 import { getWeatherForLocation } from '../services/weather.service.js'
 import { getUpcomingEvents } from '../services/calendar.service.js'
 
@@ -16,6 +17,8 @@ const getDashboard = async (req, res, next) => {
             recentNotifications,
             upcomingEvents,
             jobStats,
+            totalActiveCrops,
+            unreadCount,
         ] = await Promise.all([
 
             
@@ -42,7 +45,7 @@ const getDashboard = async (req, res, next) => {
                 where: { farmerId },
                 select: {
                     id: true, name: true, sizeHa: true, soilType: true,
-                    _count: { select: { farmerCrops: true } },
+                    _count: { select: { farmerCrops: { where: { harvestedAt: null } } } },
                 },
             }),
 
@@ -67,6 +70,8 @@ const getDashboard = async (req, res, next) => {
                 },
                 _count: { status: true },
             }),
+            prisma.farmerCrop.count({ where: { farmerId, harvestedAt: null } }),
+            prisma.notification.count({ where: { farmerId, isRead: false } }),
         ])
 
         
@@ -82,7 +87,6 @@ const getDashboard = async (req, res, next) => {
 
         
         const totalHectares = fields.reduce((sum, f) => sum + (f.sizeHa || 0), 0)
-        const unreadCount = recentNotifications.filter(n => !n.isRead).length
 
         
         const nextHarvest = upcomingEvents.find(e => e.type === 'HARVEST') || null
@@ -93,10 +97,10 @@ const getDashboard = async (req, res, next) => {
             const planted = new Date(fc.plantedAt)
             const harvest = fc.expectedHarvestAt ? new Date(fc.expectedHarvestAt) : null
             const now = new Date()
-            const total = harvest ? Math.floor((harvest - planted) / (1000 * 60 * 60 * 24)) : null
-            const elapsed = Math.floor((now - planted) / (1000 * 60 * 60 * 24))
-            const progress = total ? Math.min(100, Math.round((elapsed / total) * 100)) : null
-            const daysLeft = harvest ? Math.ceil((harvest - now) / (1000 * 60 * 60 * 24)) : null
+            const total = harvest ? daysBetween(planted, harvest) : null
+            const elapsed = daysBetween(planted, now)
+            const progress = total ? Math.max(0, Math.min(100, Math.round((elapsed / total) * 100))) : null
+            const daysLeft = harvest ? daysBetween(now, harvest) : null
 
             return {
                 id: fc.id,
@@ -125,7 +129,7 @@ const getDashboard = async (req, res, next) => {
 
             
             stats: {
-                totalActiveCrops: activeCrops.length,
+                totalActiveCrops,
                 totalFields: fields.length,
                 totalHectares: parseFloat(totalHectares.toFixed(2)),
                 unreadNotifications: unreadCount,
@@ -180,9 +184,9 @@ const getFarmSummary = async (req, res, next) => {
             activeCrops,
             harvestedCrops,
             totalFields,
-            cropsByCategory,
             cropsByStage,
             recentActivity,
+            harvestYield,
         ] = await Promise.all([
 
             
@@ -199,13 +203,6 @@ const getFarmSummary = async (req, res, next) => {
 
             
             prisma.farmerCrop.groupBy({
-                by: ['cropId'],
-                where: { farmerId },
-                _count: { cropId: true },
-            }),
-
-            
-            prisma.farmerCrop.groupBy({
                 by: ['stage'],
                 where: { farmerId, harvestedAt: null },
                 _count: { stage: true },
@@ -218,6 +215,7 @@ const getFarmSummary = async (req, res, next) => {
                 orderBy: { updatedAt: 'desc' },
                 take: 10,
             }),
+            prisma.farmerCrop.aggregate({ where: { farmerId, harvestedAt: { not: null } }, _sum: { yieldKg: true } }),
         ])
 
         
@@ -232,7 +230,8 @@ const getFarmSummary = async (req, res, next) => {
                 activeCrops,
                 harvestedCrops,
                 totalFields,
-                successRate: totalCropsPlanted > 0
+                totalYieldKg: harvestYield._sum.yieldKg ?? 0,
+                harvestCompletionRate: totalCropsPlanted > 0
                     ? Math.round((harvestedCrops / totalCropsPlanted) * 100)
                     : 0,
             },
@@ -257,7 +256,7 @@ const getHarvestHistory = async (req, res, next) => {
         const { page = 1, limit = 20 } = req.query
         const skip = (parseInt(page) - 1) * parseInt(limit)
 
-        const [harvested, total] = await Promise.all([
+        const [harvested, total, harvestYield] = await Promise.all([
             prisma.farmerCrop.findMany({
                 where: { farmerId: req.farmer.id, harvestedAt: { not: null } },
                 include: { crop: true, field: true },
@@ -268,10 +267,11 @@ const getHarvestHistory = async (req, res, next) => {
             prisma.farmerCrop.count({
                 where: { farmerId: req.farmer.id, harvestedAt: { not: null } }
             }),
+            prisma.farmerCrop.aggregate({ where: { farmerId: req.farmer.id, harvestedAt: { not: null } }, _sum: { yieldKg: true } }),
         ])
 
         
-        const totalYieldKg = harvested.reduce((sum, fc) => sum + (fc.yieldKg || 0), 0)
+        const totalYieldKg = harvestYield._sum.yieldKg ?? 0
 
         res.json(success({
             harvested: harvested.map(fc => ({
@@ -284,7 +284,7 @@ const getHarvestHistory = async (req, res, next) => {
                 yieldKg: fc.yieldKg,
                 notes: fc.notes,
                 daysToHarvest: fc.harvestedAt && fc.plantedAt
-                    ? Math.floor((new Date(fc.harvestedAt) - new Date(fc.plantedAt)) / (1000 * 60 * 60 * 24))
+                    ? daysBetween(fc.plantedAt, fc.harvestedAt)
                     : null,
             })),
             total,

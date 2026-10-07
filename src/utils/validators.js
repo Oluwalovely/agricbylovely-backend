@@ -143,7 +143,7 @@ export const updateCropSchema = z.object({
   body: z.object({
     stage: z.enum(['GERMINATING', 'SEEDLING', 'GROWING', 'FLOWERING', 'MATURING', 'READY', 'HARVESTED']).optional(),
     notes: z.string().max(5000).optional(),
-    yieldKg: z.number().nonnegative().optional(),
+    yieldKg: z.number().nonnegative().nullable().optional(),
     harvestedAt: date.optional(),
   }).refine(body => Object.keys(body).length > 0, 'Provide at least one field to update'),
 })

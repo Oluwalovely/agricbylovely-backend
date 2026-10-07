@@ -1,4 +1,5 @@
 import prisma from '../config/prisma.js'
+import { daysBetween } from '../utils/cropLifecycle.js'
 
 
 const getMonthName = (monthNumber) => {
@@ -7,11 +8,6 @@ const getMonthName = (monthNumber) => {
 }
 
 // Calculates how many days between two dates
-const daysBetween = (date1, date2) => {
-    const diff = new Date(date2) - new Date(date1)
-    return Math.floor(diff / (1000 * 60 * 60 * 24))
-}
-
 // Calculates growth progress as a percentage
 // e.g. planted 30 days ago, total 90 days → 33%
 const getGrowthProgress = (plantedAt, expectedHarvestAt) => {
@@ -19,7 +15,7 @@ const getGrowthProgress = (plantedAt, expectedHarvestAt) => {
     const total = daysBetween(plantedAt, expectedHarvestAt)
     const elapsed = daysBetween(plantedAt, new Date())
     if (total <= 0) return 100
-    return Math.min(100, Math.round((elapsed / total) * 100))
+    return Math.max(0, Math.min(100, Math.round((elapsed / total) * 100)))
 }
 
 
@@ -36,6 +32,7 @@ const getCalendarEvents = async (farmerId, month, year) => {
         const plantedAt = new Date(fc.plantedAt)
         const expectedHarvestAt = fc.expectedHarvestAt ? new Date(fc.expectedHarvestAt) : null
         const harvestedAt = fc.harvestedAt ? new Date(fc.harvestedAt) : null
+        const harvestDate = harvestedAt || expectedHarvestAt
         const daysToHarvest = expectedHarvestAt ? daysBetween(new Date(), expectedHarvestAt) : null
         const progress = getGrowthProgress(plantedAt, expectedHarvestAt)
 
@@ -50,16 +47,16 @@ const getCalendarEvents = async (farmerId, month, year) => {
             // Planting event
             planting: {
                 date: plantedAt.toISOString().split('T')[0],
-                month: plantedAt.getMonth() + 1,
-                year: plantedAt.getFullYear(),
+                month: plantedAt.getUTCMonth() + 1,
+                year: plantedAt.getUTCFullYear(),
             },
 
             // Harvest event
-            harvest: expectedHarvestAt ? {
-                date: expectedHarvestAt.toISOString().split('T')[0],
-                month: expectedHarvestAt.getMonth() + 1,
-                year: expectedHarvestAt.getFullYear(),
-                daysLeft: daysToHarvest,
+            harvest: harvestDate ? {
+                date: harvestDate.toISOString().split('T')[0],
+                month: harvestDate.getUTCMonth() + 1,
+                year: harvestDate.getUTCFullYear(),
+                daysLeft: harvestedAt ? null : daysToHarvest,
                 isOverdue: daysToHarvest < 0 && !harvestedAt,
                 isHarvested: !!harvestedAt,
             } : null,
@@ -111,7 +108,6 @@ const getUpcomingEvents = async (farmerId, days = 30) => {
 
     const upcoming = []
     const now = new Date()
-    const future = new Date(now.getTime() + days * 24 * 60 * 60 * 1000)
 
     farmerCrops.forEach(fc => {
         if (!fc.expectedHarvestAt) return
@@ -120,7 +116,7 @@ const getUpcomingEvents = async (farmerId, days = 30) => {
         const daysLeft = daysBetween(now, harvestDate)
 
         // Include if harvest is within the next N days
-        if (harvestDate >= now && harvestDate <= future) {
+        if (daysLeft >= 0 && daysLeft <= days) {
             upcoming.push({
                 type: 'HARVEST',
                 cropName: fc.crop.name,
@@ -136,7 +132,7 @@ const getUpcomingEvents = async (farmerId, days = 30) => {
         }
 
         // Overdue harvest warning
-        if (harvestDate < now) {
+        if (daysLeft < 0) {
             upcoming.push({
                 type: 'OVERDUE',
                 cropName: fc.crop.name,
@@ -174,10 +170,11 @@ const getMonthlySummary = async (farmerId, year) => {
     }))
 
     farmerCrops.forEach(fc => {
-        const plantMonth = new Date(fc.plantedAt).getMonth()
-        const plantYear = new Date(fc.plantedAt).getFullYear()
-        const harvestMonth = fc.expectedHarvestAt ? new Date(fc.expectedHarvestAt).getMonth() : null
-        const harvestYear = fc.expectedHarvestAt ? new Date(fc.expectedHarvestAt).getFullYear() : null
+        const plantMonth = new Date(fc.plantedAt).getUTCMonth()
+        const plantYear = new Date(fc.plantedAt).getUTCFullYear()
+        const harvestDate = fc.harvestedAt || fc.expectedHarvestAt
+        const harvestMonth = harvestDate ? new Date(harvestDate).getUTCMonth() : null
+        const harvestYear = harvestDate ? new Date(harvestDate).getUTCFullYear() : null
 
         // Count planting in its month
         if (plantYear === y) {
