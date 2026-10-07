@@ -12,8 +12,8 @@ const createField = async (req, res, next) => {
                 name,
                 sizeHa: sizeHa ? parseFloat(sizeHa) : null,
                 soilType: soilType || 'LOAMY',
-                latitude: latitude ? parseFloat(latitude) : null,
-                longitude: longitude ? parseFloat(longitude) : null,
+                latitude: latitude ?? null,
+                longitude: longitude ?? null,
                 notes: notes || null,
             },
         })

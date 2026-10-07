@@ -7,9 +7,9 @@ All protected routes require this header:
 Authorization: Bearer YOUR_ACCESS_TOKEN
 ```
 
-All responses follow this shape:
+Responses place endpoint-specific fields at the top level (for example, fields, farmer, or farmerCrops); there is no universal data wrapper. Example:
 ```json
-{ "success": true, "message": "...", "data": {} }
+{ "success": true, "message": "...", "fields": [] }
 { "success": false, "message": "..." }
 ```
 

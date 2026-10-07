@@ -12,7 +12,7 @@ const getMyWeather = async (req, res, next) => {
         })
 
         
-        if (!farmer.latitude || !farmer.longitude) {
+        if (farmer.latitude == null || farmer.longitude == null) {
             return res.status(400).json(fail(
                 'Please update your farm location first. Go to your profile and add your latitude and longitude.'
             ))
@@ -38,7 +38,7 @@ const getWeatherByCoords = async (req, res, next) => {
     try {
         const { lat, lon } = req.query
 
-        if (!lat || !lon) {
+        if (lat === undefined || lon === undefined) {
             return res.status(400).json(fail('Please provide lat and lon query parameters'))
         }
 
@@ -68,7 +68,7 @@ const getMyAlerts = async (req, res, next) => {
             select: { latitude: true, longitude: true },
         })
 
-        if (!farmer.latitude || !farmer.longitude) {
+        if (farmer.latitude == null || farmer.longitude == null) {
             return res.json(success({ alerts: [] }, 'No location set'))
         }
 

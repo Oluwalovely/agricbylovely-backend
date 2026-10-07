@@ -47,8 +47,8 @@ const register = async (req, res, next) => {
                 farmName,
                 farmSizeHa: farmSizeHa ? parseFloat(farmSizeHa) : null,
                 soilType: soilType || 'LOAMY',
-                latitude: latitude ? parseFloat(latitude) : null,
-                longitude: longitude ? parseFloat(longitude) : null,
+                latitude: latitude ?? null,
+                longitude: longitude ?? null,
                 state,
             },
             select: {
@@ -99,7 +99,8 @@ const login = async (req, res, next) => {
             data: { refreshToken },
         })
 
-        const { password: _, refreshToken: __, ...safeFarmer } = farmer
+        const safeFarmer = Object.fromEntries(Object.entries(farmer).filter(([key]) =>
+            !['password', 'refreshToken', 'passwordResetToken', 'passwordResetExpiry'].includes(key)))
 
         res.json(success({ farmer: safeFarmer, accessToken, refreshToken }, 'Login successful'))
     } catch (err) {

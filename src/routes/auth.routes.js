@@ -9,7 +9,7 @@ import {
 } from '../controllers/auth.controller.js'
 import { authenticate } from '../middleware/auth.js'
 import { validate } from '../middleware/validate.js'
-import { registerSchema, loginSchema, forgotPasswordSchema, resetPasswordSchema } from '../utils/validators.js'
+import { registerSchema, loginSchema, forgotPasswordSchema, resetPasswordSchema, refreshSchema } from '../utils/validators.js'
 import { authLimiter } from '../middleware/security.js'
 
 const router = Router()
@@ -17,7 +17,7 @@ const router = Router()
 // Public routes with strict rate limiting
 router.post('/register', authLimiter, validate(registerSchema), register)
 router.post('/login', authLimiter, validate(loginSchema), login)
-router.post('/refresh', refresh)
+router.post('/refresh', validate(refreshSchema), refresh)
 router.post('/forgot-password', authLimiter, validate(forgotPasswordSchema), forgotPassword)
 router.post('/reset-password', authLimiter, validate(resetPasswordSchema), resetPassword)
 

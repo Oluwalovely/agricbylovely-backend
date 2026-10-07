@@ -117,7 +117,7 @@ const changePassword = async (req, res, next) => {
 
         await prisma.farmer.update({
             where: { id: req.farmer.id },
-            data: { password: hashedPassword },
+            data: { password: hashedPassword, refreshToken: null },
         })
 
         res.json(success({}, 'Password changed successfully'))

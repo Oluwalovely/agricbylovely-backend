@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import prisma from '../config/prisma.js'
 import { authenticate } from '../middleware/auth.js'
+import { developmentOnly } from '../middleware/developmentOnly.js'
 import { success } from '../utils/response.js'
 import {
     runDailyWeatherCheck,
@@ -11,6 +12,7 @@ import {
 const router = Router()
 
 router.use(authenticate)
+router.use('/run', developmentOnly)
 
 
 router.get('/', async (req, res, next) => {

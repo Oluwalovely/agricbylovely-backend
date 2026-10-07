@@ -71,7 +71,7 @@ const getDashboard = async (req, res, next) => {
 
         
         let weather = null
-        if (farmer.latitude && farmer.longitude) {
+        if (farmer.latitude != null && farmer.longitude != null) {
             try {
                 weather = await getWeatherForLocation(farmer.latitude, farmer.longitude)
             } catch (err) {

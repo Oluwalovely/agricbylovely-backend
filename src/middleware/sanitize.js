@@ -1,38 +1,16 @@
-const trimStrings = (obj) => {
-    if (typeof obj !== 'object' || obj === null) return obj
+const passwordFields = new Set(['password', 'currentPassword', 'newPassword'])
 
-    return Object.keys(obj).reduce((acc, key) => {
-        const value = obj[key]
-        if (typeof value === 'string') {
-            acc[key] = value.trim() // remove leading and trailing spaces
-        } else if (typeof value === 'object') {
-            acc[key] = trimStrings(value) // handle nested objects
-        } else {
-            acc[key] = value
-        }
-        return acc
-    }, {})
+const trimStrings = (value) => {
+  if (Array.isArray(value)) return value.map(trimStrings)
+  if (!value || typeof value !== 'object') return value
+  return Object.fromEntries(Object.entries(value).map(([key, item]) => [
+    key,
+    typeof item === 'string' && !passwordFields.has(key) ? item.trim()
+      : typeof item === 'object' ? trimStrings(item) : item,
+  ]))
 }
 
-
-const removeEmptyStrings = (obj) => {
-    if (typeof obj !== 'object' || obj === null) return obj
-
-    return Object.keys(obj).reduce((acc, key) => {
-        const value = obj[key]
-        if (value !== '') {
-            acc[key] = value
-        }
-        return acc
-    }, {})
+export const sanitize = (req, res, next) => {
+  if (req.body) req.body = trimStrings(req.body)
+  next()
 }
-
-const sanitize = (req, res, next) => {
-    if (req.body) {
-        req.body = trimStrings(req.body)
-        req.body = removeEmptyStrings(req.body)
-    }
-    next()
-}
-
-export { sanitize }

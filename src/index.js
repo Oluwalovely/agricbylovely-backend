@@ -3,6 +3,7 @@ import { Server } from 'socket.io'
 import app from './app.js'
 import { env } from './config/env.js'
 import { startScheduler } from './jobs/scheduler.js'
+import { configureNotificationSockets } from './middleware/socketAuth.js'
 
 const httpServer = createServer(app)
 
@@ -16,19 +17,7 @@ export const io = new Server(httpServer, {
 
 app.set('io', io) 
 
-io.on('connection', (socket) => {
-    console.log(`Socket connected: ${socket.id}`)
-
-    // Frontend calls socket.emit('join', farmerId) after login
-    socket.on('join', (farmerId) => {
-        socket.join(`farmer:${farmerId}`)
-        console.log(`Farmer ${farmerId} joined their notification room`)
-    })
-
-    socket.on('disconnect', () => {
-        console.log(`Socket disconnected: ${socket.id}`)
-    })
-})
+configureNotificationSockets(io)
 
 httpServer.listen(env.PORT, () => {
     console.log(`

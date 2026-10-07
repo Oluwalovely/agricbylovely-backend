@@ -9,19 +9,22 @@ import {
     removeMyCrop,
 } from '../controllers/crop.controller.js'
 import { authenticate } from '../middleware/auth.js'
+import { validate } from '../middleware/validate.js'
+import { cropQuerySchema, idParamsSchema, plantCropSchema, updateCropSchema } from '../utils/validators.js'
+import { searchLimiter } from '../middleware/security.js'
 
 const router = Router()
 
 
-router.get('/', getAllCrops)    
+router.get('/', searchLimiter, validate(cropQuerySchema), getAllCrops)
 router.get('/categories', getCropCategories) 
 router.get('/my-crops', authenticate, getMyCrops)
-router.put('/my-crops/:id', authenticate, updateMyCrop)
-router.delete('/my-crops/:id', authenticate, removeMyCrop)
+router.put('/my-crops/:id', authenticate, validate(updateCropSchema), updateMyCrop)
+router.delete('/my-crops/:id', authenticate, validate(idParamsSchema), removeMyCrop)
 
 
-router.get('/:id', getCropById)      
-router.post('/:id/plant', authenticate, plantCrop)  
+router.get('/:id', validate(idParamsSchema), getCropById)
+router.post('/:id/plant', authenticate, validate(plantCropSchema), plantCrop)
 
 
 export default router

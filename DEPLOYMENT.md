@@ -29,3 +29,7 @@ For UptimeRobot, create an HTTP monitor for `https://agricbylovely-api.onrender.
 The backend sleeps after 15 minutes without incoming traffic. The next request can take about a minute to wake it. Socket.IO reconnects when the service is available. Scheduled jobs inside the server do not run while it is asleep, so reminders are demonstrations rather than continuously running automation on this plan.
 
 Verify the backend, frontend, old account login, and farm data on the new hosting before retiring Railway. Local PostgreSQL and backups remain separate from Neon; changes do not sync automatically.
+
+## Account foundation
+
+Run `npm test` for validation and account-isolation checks. Notification sockets require `auth: { token: accessToken }`; the server derives the farmer room. Manual `/api/jobs/run/*` routes are disabled unless `NODE_ENV=development`. See FOUNDATION.md for Phase 1 verification.

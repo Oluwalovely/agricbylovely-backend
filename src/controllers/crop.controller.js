@@ -143,6 +143,14 @@ const plantCrop = async (req, res, next) => {
             return res.status(404).json(fail('Crop not found'))
         }
 
+        if (fieldId) {
+            const field = await prisma.field.findFirst({
+                where: { id: fieldId, farmerId: req.farmer.id },
+                select: { id: true },
+            })
+            if (!field) return res.status(404).json(fail('Field not found'))
+        }
+
         const plantDate = new Date(plantedAt || Date.now())
         const expectedHarvestAt = crop.daysToHarvest
             ? new Date(plantDate.getTime() + crop.daysToHarvest * 24 * 60 * 60 * 1000)
