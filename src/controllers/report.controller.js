@@ -3,6 +3,7 @@ import { success } from '../utils/response.js'
 import { daysBetween } from '../utils/cropLifecycle.js'
 import { getWeatherForLocation } from '../services/weather.service.js'
 import { getUpcomingEvents } from '../services/calendar.service.js'
+import { syncWeatherNotifications } from '../services/notification.service.js'
 
 
 const getDashboard = async (req, res, next) => {
@@ -77,6 +78,9 @@ const getDashboard = async (req, res, next) => {
         
         let weather = null
         let weatherStatus = 'LOCATION_REQUIRED'
+        let notificationSync = null
+        let notifications = recentNotifications
+        let currentUnreadCount = unreadCount
         if (farmer.latitude != null && farmer.longitude != null) {
             try {
                 weather = await getWeatherForLocation(farmer.latitude, farmer.longitude)
@@ -88,6 +92,17 @@ const getDashboard = async (req, res, next) => {
             }
         }
 
+        if (weather) {
+            notificationSync = await syncWeatherNotifications(farmerId, weather, req.app?.get('io'))
+            if (weather.alerts.length > 0) {
+                // Read after synchronization so this response includes newly
+                // saved alerts even when the socket hasn't connected yet.
+                [notifications, currentUnreadCount] = await Promise.all([
+                    prisma.notification.findMany({ where: { farmerId }, orderBy: [{ isRead: 'asc' }, { createdAt: 'desc' }, { id: 'desc' }], take: 5 }),
+                    prisma.notification.count({ where: { farmerId, isRead: false } }),
+                ])
+            }
+        }
         
         const totalHectares = fields.reduce((sum, f) => sum + (f.sizeHa || 0), 0)
 
@@ -135,7 +150,7 @@ const getDashboard = async (req, res, next) => {
                 totalActiveCrops,
                 totalFields: fields.length,
                 totalHectares: parseFloat(totalHectares.toFixed(2)),
-                unreadNotifications: unreadCount,
+                unreadNotifications: currentUnreadCount,
                 upcomingHarvests: upcomingEvents.filter(e => e.type === 'HARVEST').length,
                 overdueHarvests: overdueCount,
             },
@@ -164,9 +179,10 @@ const getDashboard = async (req, res, next) => {
                 zone: weather.location.zoneName,
             } : null,
             weatherStatus,
+            notificationSync,
 
             
-            notifications: recentNotifications,
+            notifications,
 
             
             upcomingEvents: upcomingEvents.slice(0, 5),

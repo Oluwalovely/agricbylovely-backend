@@ -137,6 +137,18 @@ const sendWeatherAlertNotifications = async (farmerId, weatherAlerts, io = null,
     return created
 }
 
+// Interactive checks share the scheduler's receipts. Saving history must not
+// hide otherwise usable weather if notification storage temporarily fails.
+const syncWeatherNotifications = async (farmerId, weather, io = null) => {
+    try {
+        const created = await sendWeatherAlertNotifications(farmerId, weather.alerts, io)
+        return { status: 'SAVED', createdCount: created.length }
+    } catch (error) {
+        console.error('Weather notification save failed:', error.message)
+        return { status: 'UNAVAILABLE', createdCount: 0 }
+    }
+}
+
 
 // Called when harvest is 7 days, 3 days or 1 day away
 const sendHarvestReminder = async (farmerId, cropName, daysLeft, io = null, record = null) => {
@@ -153,6 +165,7 @@ const sendHarvestReminder = async (farmerId, cropName, daysLeft, io = null, reco
 }
 
 export {
+    syncWeatherNotifications,
     createScheduledNotification,
     createNotification,
     createManyNotifications,
