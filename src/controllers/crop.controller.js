@@ -1,7 +1,5 @@
 import prisma from '../config/prisma.js'
 import { success, fail } from '../utils/response.js'
-import { searchPerenual } from '../services/perenual.service.js'
-import { fillCropDetails } from '../services/aifiller.service.js'
 
 
 const getAllCrops = async (req, res, next) => {
@@ -36,51 +34,6 @@ const getAllCrops = async (req, res, next) => {
         ])
 
         
-        if (crops.length === 0 && q) {
-            console.log(`"${q}" not found locally — searching Perenual...`)
-
-            const perenualResults = await searchPerenual(q)
-            console.log(`Perenual found: ${perenualResults.length} results`)
-
-            if (perenualResults.length > 0) {
-                const saved = []
-
-                for (const crop of perenualResults) {
-                    
-                    const exists = await prisma.crop.findFirst({
-                        where: { name: { equals: crop.name, mode: 'insensitive' } },
-                    })
-
-                    if (!exists) {
-                        
-                        const newCrop = await prisma.crop.create({ data: crop })
-
-                        
-                        const enriched = await fillCropDetails(newCrop)
-                        saved.push(enriched)
-                    }
-                }
-
-                console.log(`Saved and enriched ${saved.length} new crops`)
-
-                return res.json(success({
-                    crops: saved,
-                    total: saved.length,
-                    page: 1,
-                    pages: 1,
-                    source: 'external',
-                }, 'Crops fetched and enriched from external source'))
-            }
-
-            
-            return res.json(success({
-                crops: [],
-                total: 0,
-                page: 1,
-                pages: 1,
-            }, 'No crops found'))
-        }
-
         res.json(success({
             crops,
             total,
