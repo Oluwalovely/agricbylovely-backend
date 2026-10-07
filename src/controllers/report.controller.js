@@ -76,12 +76,15 @@ const getDashboard = async (req, res, next) => {
 
         
         let weather = null
+        let weatherStatus = 'LOCATION_REQUIRED'
         if (farmer.latitude != null && farmer.longitude != null) {
             try {
                 weather = await getWeatherForLocation(farmer.latitude, farmer.longitude)
+                weatherStatus = 'AVAILABLE'
             } catch (err) {
                 // Weather fetch failed — don't crash the dashboard
                 console.error('Weather fetch failed for dashboard:', err.message)
+                weatherStatus = 'UNAVAILABLE'
             }
         }
 
@@ -148,6 +151,9 @@ const getDashboard = async (req, res, next) => {
 
             
             weather: weather ? {
+                feelsLike: weather.current.feelsLike,
+                visibility: weather.current.visibility,
+                fetchedAt: weather.fetchedAt,
                 temp: weather.current.temp,
                 humidity: weather.current.humidity,
                 description: weather.current.description,
@@ -157,6 +163,7 @@ const getDashboard = async (req, res, next) => {
                 forecast: weather.forecast.slice(0, 3), // show 3 days on dashboard
                 zone: weather.location.zoneName,
             } : null,
+            weatherStatus,
 
             
             notifications: recentNotifications,

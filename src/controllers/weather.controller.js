@@ -1,86 +1,19 @@
-import prisma from '../config/prisma.js'
+﻿import prisma from '../config/prisma.js'
 import { success, fail } from '../utils/response.js'
 import { getWeatherForLocation } from '../services/weather.service.js'
-
-
-const getMyWeather = async (req, res, next) => {
-    try {
-        
-        const farmer = await prisma.farmer.findUnique({
-            where: { id: req.farmer.id },
-            select: { latitude: true, longitude: true, state: true },
-        })
-
-        
-        if (farmer.latitude == null || farmer.longitude == null) {
-            return res.status(400).json(fail(
-                'Please update your farm location first. Go to your profile and add your latitude and longitude.'
-            ))
-        }
-
-        const weather = await getWeatherForLocation(farmer.latitude, farmer.longitude)
-
-        res.json(success({ weather }, 'Weather fetched successfully'))
-    } catch (err) {
-        
-        if (err.response?.status === 401) {
-            return res.status(500).json(fail('Weather service is not configured correctly. Please check the API key.'))
-        }
-        if (err.response?.status === 404) {
-            return res.status(400).json(fail('Location not found. Please check your farm coordinates.'))
-        }
-        next(err)
-    }
+async function farmWeather(req, res, next, alertsOnly = false) {
+  try {
+    const farmer = await prisma.farmer.findUnique({ where: { id: req.farmer.id }, select: { latitude: true, longitude: true } })
+    if (farmer?.latitude == null || farmer?.longitude == null) return res.status(400).json({ ...fail('Add both farm coordinates in your profile to see local weather.'), code: 'LOCATION_REQUIRED' })
+    const weather = await getWeatherForLocation(farmer.latitude, farmer.longitude)
+    res.json(success(alertsOnly ? { alerts: weather.alerts, total: weather.alerts.length } : { weather }, 'Weather fetched successfully'))
+  } catch (error) { next(error) }
 }
-
-
-const getWeatherByCoords = async (req, res, next) => {
-    try {
-        const { lat, lon } = req.query
-
-        if (lat === undefined || lon === undefined) {
-            return res.status(400).json(fail('Please provide lat and lon query parameters'))
-        }
-
-        const latitude = parseFloat(lat)
-        const longitude = parseFloat(lon)
-
-        if (isNaN(latitude) || isNaN(longitude)) {
-            return res.status(400).json(fail('Invalid coordinates — lat and lon must be numbers'))
-        }
-
-        const weather = await getWeatherForLocation(latitude, longitude)
-
-        res.json(success({ weather }, 'Weather fetched successfully'))
-    } catch (err) {
-        if (err.response?.status === 401) {
-            return res.status(500).json(fail('Weather service is not configured correctly'))
-        }
-        next(err)
-    }
+export const getMyWeather = (req, res, next) => farmWeather(req, res, next)
+export const getMyAlerts = (req, res, next) => farmWeather(req, res, next, true)
+export const getWeatherByCoords = async (req, res, next) => {
+  try {
+    const weather = await getWeatherForLocation(Number(req.query.lat), Number(req.query.lon))
+    res.json(success({ weather }, 'Weather fetched successfully'))
+  } catch (error) { next(error) }
 }
-
-
-const getMyAlerts = async (req, res, next) => {
-    try {
-        const farmer = await prisma.farmer.findUnique({
-            where: { id: req.farmer.id },
-            select: { latitude: true, longitude: true },
-        })
-
-        if (farmer.latitude == null || farmer.longitude == null) {
-            return res.json(success({ alerts: [] }, 'No location set'))
-        }
-
-        const weather = await getWeatherForLocation(farmer.latitude, farmer.longitude)
-
-        res.json(success({
-            alerts: weather.alerts,
-            total: weather.alerts.length,
-        }, 'Alerts fetched successfully'))
-    } catch (err) {
-        next(err)
-    }
-}
-
-export { getMyWeather, getWeatherByCoords, getMyAlerts }

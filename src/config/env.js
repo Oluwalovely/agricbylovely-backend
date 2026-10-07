@@ -17,6 +17,7 @@ const envSchema = z.object({
   SMTP_PASS: z.string().optional(),
   EMAIL_FROM: z.string().optional(),
   OPENWEATHER_API_KEY: z.string().optional(),
+  SCHEDULED_EMAILS_ENABLED: z.enum(['true', 'false']).default('false'),
   PERENUAL_API_KEY: z.string().optional(),
   ANTHROPIC_API_KEY: z.string().optional(),
   CLOUDINARY_CLOUD_NAME: z.string().optional(),

@@ -1,0 +1,15 @@
+# Weather and notifications
+
+Weather uses the saved farmer coordinate pair (including zero), not the state name. Missing location returns HTTP 400 with `LOCATION_REQUIRED`; missing/invalid provider credentials and upstream failures return a safe HTTP 503. Dashboard reports `weatherStatus` independently of farm data.
+
+Set `OPENWEATHER_API_KEY` in the Render backend environment. The key stays on the server. Both current weather and the 5-day/3-hour forecast endpoints must be enabled. See [OpenWeather's forecast contract](https://openweathermap.org/forecast5) for UTC timestamps and the location's timezone offset. Forecast samples are grouped by local date; incomplete days are marked, rainfall is summed, and peak wind uses the maximum available sample. Low/high temperatures describe available samples, not guaranteed full-day extremes.
+
+Snapshots expire after one hour; old-format snapshots are refreshed on demand. Concurrent requests for the same rounded coordinate pair share one provider request. Weather reads cache snapshots but never create notification history. Farming advisories are generated rules, not official warnings or diagnosed crop conditions.
+
+Notification reads and all mutations are farmer-scoped. Pagination has a deterministic date/ID order and a separate global unread count. Socket identities/rooms remain token-authenticated; new payloads include `farmerId` for frontend account checks.
+
+Scheduled in-app weather alerts deduplicate by farmer, UTC day, alert type and title. Harvest reminders deduplicate by farmer, planting ID, expected date and milestone (7/3/1/0 UTC calendar days). A transaction-level PostgreSQL advisory lock serializes competing deliveries. Notification and DONE Job receipt commit atomically, so retries cannot recreate deleted/read notifications. Transaction failures can be retried without a partial receipt or socket push. Job receipts must be retained for deduplication. No schema migration is required.
+
+`SCHEDULED_EMAILS_ENABLED` defaults to `false`: SMTP automation is deferred until Phase 7 delivery is configured. Do not enable it yet; email idempotence/delivery still need Phase 7 work. The existing in-process cron runs at 06:00/07:00 Africa/Lagos when the service is awake. It is not a durable scheduler and cannot guarantee reminders missed during a free-host sleep. Manual global job triggers remain development-only.
+
+Verification: isolated provider/Prisma mocks test forecast boundaries, cache/coalescing, provider errors, missing location, owner-scoped operations, stable pagination and notification receipts/retries. Socket authentication regression tests remain in foundation tests. No production notifications or emails were sent by verification.

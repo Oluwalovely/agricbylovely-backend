@@ -1,4 +1,6 @@
 import cron from 'node-cron'
+import { env } from '../config/env.js'
+import { daysBetween } from '../utils/cropLifecycle.js'
 import prisma from '../config/prisma.js'
 import { getWeatherForLocation } from '../services/weather.service.js'
 import { sendWeatherAlertNotifications, sendHarvestReminder } from '../services/notification.service.js'
@@ -72,7 +74,7 @@ const runDailyWeatherCheck = async (io) => {
             await sendWeatherAlertNotifications(farmer.id, weather.alerts, io)
 
             // Send email
-            await sendWeatherAlertEmail(farmer, weather.alerts)
+            if (env.SCHEDULED_EMAILS_ENABLED === 'true' && !await sendWeatherAlertEmail(farmer, weather.alerts)) throw new Error('Weather email delivery failed')
         })
     }
 
@@ -102,14 +104,14 @@ const runHarvestReminders = async (io) => {
 
     for (const fc of farmerCrops) {
         const harvestDate = new Date(fc.expectedHarvestAt)
-        const daysLeft = Math.ceil((harvestDate - now) / (1000 * 60 * 60 * 24))
+        const daysLeft = daysBetween(now, harvestDate)
 
         // Only remind at 7, 3, 1 and 0 day milestones
         if (![7, 3, 1, 0].includes(daysLeft)) continue
 
         // Send in-app notification
         await runJob('HARVEST_REMINDER', fc.farmerId, async () => {
-            await sendHarvestReminder(fc.farmerId, fc.crop.name, daysLeft, io)
+            await sendHarvestReminder(fc.farmerId, fc.crop.name, daysLeft, io, fc)
         })
 
         // Group for email
@@ -127,6 +129,7 @@ const runHarvestReminders = async (io) => {
 
     // Send one harvest reminder email per farmer
     for (const { farmer, crops } of Object.values(farmerReminders)) {
+        if (env.SCHEDULED_EMAILS_ENABLED !== 'true') continue
         await sendHarvestReminderEmail(farmer, crops)
         console.log(`Harvest reminder sent to ${farmer.email} for ${crops.length} crops`)
     }
@@ -136,6 +139,7 @@ const runHarvestReminders = async (io) => {
 
 
 const runWeeklyDigest = async () => {
+    if (env.SCHEDULED_EMAILS_ENABLED !== 'true') return
     console.log('Running weekly digest...')
 
     const farmers = await prisma.farmer.findMany({
@@ -181,17 +185,17 @@ const startScheduler = (io) => {
 
     // Daily weather check — 6:00 AM every day
     cron.schedule('0 6 * * *', () => {
-        runDailyWeatherCheck(io)
+        runDailyWeatherCheck(io).catch(error => console.error('Weather job failed:', error.message))
     }, { timezone: 'Africa/Lagos' })
 
     // Harvest reminders — 7:00 AM every day
     cron.schedule('0 7 * * *', () => {
-        runHarvestReminders(io)
+        runHarvestReminders(io).catch(error => console.error('Harvest job failed:', error.message))
     }, { timezone: 'Africa/Lagos' })
 
     // Weekly digest — 7:00 AM every Monday
     cron.schedule('0 7 * * 1', () => {
-        runWeeklyDigest()
+        runWeeklyDigest().catch(error => console.error('Digest job failed:', error.message))
     }, { timezone: 'Africa/Lagos' })
 
     console.log('Scheduler started (Africa/Lagos timezone)')

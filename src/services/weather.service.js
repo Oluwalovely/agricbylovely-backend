@@ -1,6 +1,7 @@
 import axios from 'axios'
 import prisma from '../config/prisma.js'
 import { env } from '../config/env.js'
+import { AppError } from '../middleware/errorHandler.js'
 
 
 const BASE_URL = 'https://api.openweathermap.org/data/2.5'
@@ -11,6 +12,7 @@ const getCachedWeather = async (latitude, longitude) => {
         where: { latitude_longitude: { latitude, longitude } }
     })
     if (!snapshot) return null
+    if (snapshot.data?.timezoneOffset === undefined) return null
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000)
     if (snapshot.fetchedAt < oneHourAgo) return null
     return snapshot.data
@@ -48,7 +50,7 @@ const formatDailyForecast = (forecastData) => {
     const days = {}
 
     forecastData.list.forEach(item => {
-        const date = item.dt_txt.split(' ')[0]
+        const date = new Date((item.dt + (forecastData.city?.timezone || 0)) * 1000).toISOString().slice(0, 10)
         if (!days[date]) {
             days[date] = {
                 date,
@@ -58,9 +60,12 @@ const formatDailyForecast = (forecastData) => {
                 icon: item.weather[0].icon,
                 windSpeed: item.wind.speed,
                 rainfall: 0,
+                samples: 0,
             }
         }
         days[date].temps.push(item.main.temp)
+        days[date].samples += 1
+        days[date].windSpeed = Math.max(days[date].windSpeed, item.wind.speed)
         days[date].humidity.push(item.main.humidity)
         if (item.rain?.['3h']) days[date].rainfall += item.rain['3h']
     })
@@ -74,6 +79,7 @@ const formatDailyForecast = (forecastData) => {
         icon: day.icon,
         windSpeed: day.windSpeed,
         rainfallMm: parseFloat(day.rainfall.toFixed(1)),
+        partialDay: day.samples < 8,
     }))
 }
 
@@ -442,9 +448,20 @@ const getWeatherForLocation = async (latitude, longitude) => {
         fetchedAt: new Date().toISOString(),
     }
 
+    weatherData.source = 'OpenWeather'
+    weatherData.timezoneOffset = current.timezone || 0
     await saveToCache(lat, lon, weatherData)
 
     return weatherData
 }
 
-export { getWeatherForLocation, generateWeatherAlerts, getFarmingZone }
+const pending = new Map()
+const getWeather = async (latitude, longitude) => {
+    if (!env.OPENWEATHER_API_KEY?.trim()) throw new AppError('Weather is unavailable right now. Please try again later.', 503)
+    const key = `${latitude.toFixed(2)},${longitude.toFixed(2)}`
+    if (!pending.has(key)) pending.set(key, getWeatherForLocation(latitude, longitude).catch(() => {
+        throw new AppError('Weather is unavailable right now. Please try again later.', 503)
+    }).finally(() => pending.delete(key)))
+    return pending.get(key)
+}
+export { getWeather as getWeatherForLocation, generateWeatherAlerts, getFarmingZone, formatDailyForecast }

@@ -1,5 +1,19 @@
 import prisma from '../config/prisma.js'
 
+// The lock and durable receipt prevent repeats, including after deletion.
+const createScheduledNotification = async (farmerId, data, key, jobType, io) => {
+    const notification = await prisma.$transaction(async tx => {
+        await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`${farmerId}:${key}`}))`
+        const existing = await tx.job.findFirst({ where: { farmerId, type: jobType, status: 'DONE', payload: { path: ['notificationKey'], equals: key } } })
+        if (existing) return null
+        const saved = await tx.notification.create({ data: { farmerId, ...data } })
+        await tx.job.create({ data: { farmerId, type: jobType, status: 'DONE', payload: { notificationKey: key }, runAt: new Date(), completedAt: new Date() } })
+        return saved
+    })
+    if (notification && io) io.to(`farmer:${farmerId}`).emit('new_notification', notification)
+    return notification
+}
+
 // Saves to database AND pushes live via Socket.io
 const createNotification = async (farmerId, { type, title, message }, io = null) => {
     // Save notification to database
@@ -12,6 +26,7 @@ const createNotification = async (farmerId, { type, title, message }, io = null)
     if (io) {
         io.to(`farmer:${farmerId}`).emit('new_notification', {
             id: notification.id,
+            farmerId,
             type: notification.type,
             title: notification.title,
             message: notification.message,
@@ -49,7 +64,7 @@ const getNotifications = async (farmerId, { page = 1, limit = 20, unreadOnly = f
     const [notifications, total, unreadCount] = await Promise.all([
         prisma.notification.findMany({
             where,
-            orderBy: { createdAt: 'desc' }, // newest first
+            orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
             skip,
             take: parseInt(limit),
         }),
@@ -104,7 +119,7 @@ const clearReadNotifications = async (farmerId) => {
 // Send weather alerts as notifications 
 // Called by the daily weather check job
 // Checks weather alerts and creates notifications for each
-const sendWeatherAlertNotifications = async (farmerId, weatherAlerts, io = null) => {
+const sendWeatherAlertNotifications = async (farmerId, weatherAlerts, io = null, date = new Date().toISOString().slice(0, 10)) => {
     if (!weatherAlerts || weatherAlerts.length === 0) return []
 
     const notifications = weatherAlerts.map(alert => ({
@@ -114,23 +129,31 @@ const sendWeatherAlertNotifications = async (farmerId, weatherAlerts, io = null)
         message: alert.message,
     }))
 
-    return createManyNotifications(notifications, io)
+    const created = []
+    for (const { farmerId: owner, ...data } of notifications) {
+        const saved = await createScheduledNotification(owner, data, `weather:${date}:${data.type}:${data.title}`, 'WEATHER_ALERT', io)
+        if (saved) created.push(saved)
+    }
+    return created
 }
 
 
 // Called when harvest is 7 days, 3 days or 1 day away
-const sendHarvestReminder = async (farmerId, cropName, daysLeft, io = null) => {
+const sendHarvestReminder = async (farmerId, cropName, daysLeft, io = null, record = null) => {
     const urgency = daysLeft === 1 ? 'tomorrow' :
         daysLeft === 0 ? 'today' : `in ${daysLeft} days`
 
-    return createNotification(farmerId, {
+    const data = {
         type: 'HARVEST',
         title: 'Harvest Reminder',
-        message: `Your ${cropName} is ready for harvest ${urgency}. Prepare your harvesting tools and storage facilities.`,
-    }, io)
+        message: `Your ${cropName} has an estimated harvest date ${urgency}. Check crop maturity before harvesting.`,
+    }
+    if (!record) throw new Error('A planting record is required for a harvest reminder')
+    return createScheduledNotification(farmerId, data, `harvest:${record.id}:${new Date(record.expectedHarvestAt).toISOString().slice(0, 10)}:${daysLeft}`, 'HARVEST_REMINDER', io)
 }
 
 export {
+    createScheduledNotification,
     createNotification,
     createManyNotifications,
     getNotifications,
