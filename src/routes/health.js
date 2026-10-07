@@ -4,6 +4,15 @@ import { PrismaClient } from '@prisma/client'
 const router = Router()
 const prisma = new PrismaClient()
 
+// Uptime monitoring checks the HTTP server without waking the database.
+router.get('/live', (req, res) => {
+  res.set('Cache-Control', 'no-store')
+  res.json({
+    success: true,
+    message: 'AgricByLovely API is running',
+  })
+})
+
 router.get('/', async (req, res) => {
   let dbStatus = 'connected'
 

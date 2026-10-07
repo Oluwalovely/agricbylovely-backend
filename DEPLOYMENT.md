@@ -24,6 +24,8 @@ Outbound SMTP is blocked on Render's free service. The current email service use
 
 ## Free-tier behavior
 
+For UptimeRobot, create an HTTP monitor for `https://agricbylovely-api.onrender.com/api/health/live` with a 5-minute interval. This endpoint returns HTTP 200 when the server responds and does not query PostgreSQL, allowing Neon to suspend its compute between database requests. The existing `/api/health` endpoint also checks database connectivity; avoid using it for frequent uptime monitoring. Monitoring does not guarantee continuous availability or remove hosting quotas.
+
 The backend sleeps after 15 minutes without incoming traffic. The next request can take about a minute to wake it. Socket.IO reconnects when the service is available. Scheduled jobs inside the server do not run while it is asleep, so reminders are demonstrations rather than continuously running automation on this plan.
 
 Verify the backend, frontend, old account login, and farm data on the new hosting before retiring Railway. Local PostgreSQL and backups remain separate from Neon; changes do not sync automatically.
