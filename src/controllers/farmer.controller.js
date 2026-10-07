@@ -64,9 +64,9 @@ const updateProfile = async (req, res, next) => {
         if (farmName !== undefined) updateData.farmName = farmName
         if (soilType !== undefined) updateData.soilType = soilType
         if (state !== undefined) updateData.state = state
-        if (farmSizeHa !== undefined) updateData.farmSizeHa = parseFloat(farmSizeHa)
-        if (latitude !== undefined) updateData.latitude = parseFloat(latitude)
-        if (longitude !== undefined) updateData.longitude = parseFloat(longitude)
+        if (farmSizeHa !== undefined) updateData.farmSizeHa = farmSizeHa
+        if (latitude !== undefined) updateData.latitude = latitude
+        if (longitude !== undefined) updateData.longitude = longitude
 
         const farmer = await prisma.farmer.update({
             where: { id: req.farmer.id },

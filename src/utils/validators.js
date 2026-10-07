@@ -55,25 +55,32 @@ export const loginSchema = z.object({
 })
 
 
+const editableCoordinates = {
+  latitude: z.number().min(-90).max(90).nullable().optional(),
+  longitude: z.number().min(-180).max(180).nullable().optional(),
+}
+const coordinatePair = body => (body.latitude === undefined && body.longitude === undefined) ||
+  (body.latitude === null && body.longitude === null) ||
+  (typeof body.latitude === 'number' && typeof body.longitude === 'number')
+
 export const updateProfileSchema = z.object({
   body: z.object({
     firstName: z.string().min(2).max(50).optional(),
     lastName: z.string().min(2).max(50).optional(),
-    phone: z.string().optional(),
+    phone: z.string().max(50).optional(),
     farmName: z.string().min(2).max(100).optional(),
-    farmSizeHa: z.number().positive().optional(),
+    farmSizeHa: z.number().positive().nullable().optional(),
     soilType: z.enum(['CLAY', 'SANDY', 'LOAMY', 'SILTY', 'PEATY', 'CHALKY']).optional(),
-    latitude,
-    longitude,
-    state: z.string().optional(),
-  }),
+    ...editableCoordinates,
+    state: z.string().max(100).optional(),
+  }).refine(coordinatePair, 'Provide both coordinates, or clear both together'),
 })
 
 
 export const changePasswordSchema = z.object({
   body: z.object({
     currentPassword: z.string().min(1, 'Current password is required'),
-    newPassword: z.string().min(8, 'New password must be at least 8 characters'),
+    newPassword: z.string().min(8, 'New password must be at least 8 characters').max(100),
   }),
 })
 
@@ -81,24 +88,22 @@ export const changePasswordSchema = z.object({
 export const createFieldSchema = z.object({
   body: z.object({
     name: z.string().min(1, 'Field name is required').max(100),
-    sizeHa: z.number().positive().optional(),
+    sizeHa: z.number().positive().nullable().optional(),
     soilType: z.enum(['CLAY', 'SANDY', 'LOAMY', 'SILTY', 'PEATY', 'CHALKY']).optional(),
-    latitude,
-    longitude,
-    notes: z.string().optional(),
-  }),
+    ...editableCoordinates,
+    notes: z.string().max(5000).optional(),
+  }).refine(coordinatePair, 'Provide both coordinates, or clear both together'),
 })
 
 
 export const updateFieldSchema = z.object({
   body: z.object({
     name: z.string().min(1).max(100).optional(),
-    sizeHa: z.number().positive().optional(),
+    sizeHa: z.number().positive().nullable().optional(),
     soilType: z.enum(['CLAY', 'SANDY', 'LOAMY', 'SILTY', 'PEATY', 'CHALKY']).optional(),
-    latitude,
-    longitude,
-    notes: z.string().optional(),
-  }),
+    ...editableCoordinates,
+    notes: z.string().max(5000).optional(),
+  }).refine(coordinatePair, 'Provide both coordinates, or clear both together'),
 })
 
 
