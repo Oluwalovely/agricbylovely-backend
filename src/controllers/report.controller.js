@@ -260,7 +260,7 @@ const getHarvestHistory = async (req, res, next) => {
             prisma.farmerCrop.findMany({
                 where: { farmerId: req.farmer.id, harvestedAt: { not: null } },
                 include: { crop: true, field: true },
-                orderBy: { harvestedAt: 'desc' },
+                orderBy: [{ harvestedAt: 'desc' }, { id: 'desc' }],
                 skip,
                 take: parseInt(limit),
             }),

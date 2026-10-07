@@ -61,6 +61,7 @@ const getCalendarEvents = async (farmerId, month, year) => {
                 isHarvested: !!harvestedAt,
             } : null,
 
+            isHarvested: !!harvestedAt,
             notes: fc.notes,
         }
     })
@@ -82,12 +83,11 @@ const getCalendarEvents = async (farmerId, month, year) => {
             // Include if crop is currently growing through this month
             const plantDate = new Date(event.planting.date)
             const harvestDate = event.harvest ? new Date(event.harvest.date) : null
-            const monthStart = new Date(y, m - 1, 1)
-            const monthEnd = new Date(y, m, 0)
+            const monthStart = new Date(Date.UTC(y, m - 1, 1))
+            const monthEnd = new Date(Date.UTC(y, m, 0, 23, 59, 59, 999))
 
-            const growingThroughMonth = harvestDate &&
-                plantDate <= monthEnd &&
-                harvestDate >= monthStart
+            const growingThroughMonth = plantDate <= monthEnd &&
+                (!event.isHarvested || harvestDate >= monthStart)
 
             return plantingInMonth || harvestInMonth || growingThroughMonth
         })
@@ -166,6 +166,9 @@ const getMonthlySummary = async (farmerId, year) => {
         year: y,
         plantings: 0,
         harvests: 0,
+        plannedHarvests: 0,
+        yieldKg: 0,
+        recordedYieldCount: 0,
         crops: [],
     }))
 
@@ -181,6 +184,7 @@ const getMonthlySummary = async (farmerId, year) => {
             months[plantMonth].plantings++
             months[plantMonth].crops.push({
                 name: fc.crop.name,
+                id: fc.id,
                 event: 'planting',
                 stage: fc.stage,
             })
@@ -188,10 +192,19 @@ const getMonthlySummary = async (farmerId, year) => {
 
         // Count harvest in its month
         if (harvestMonth !== null && harvestYear === y) {
-            months[harvestMonth].harvests++
+            if (fc.harvestedAt) {
+                months[harvestMonth].harvests++
+                if (fc.yieldKg != null) {
+                    months[harvestMonth].yieldKg += fc.yieldKg
+                    months[harvestMonth].recordedYieldCount++
+                }
+            } else {
+                months[harvestMonth].plannedHarvests++
+            }
             months[harvestMonth].crops.push({
                 name: fc.crop.name,
-                event: 'harvest',
+                id: fc.id,
+                event: fc.harvestedAt ? 'harvest' : 'estimated-harvest',
                 stage: fc.stage,
             })
         }
