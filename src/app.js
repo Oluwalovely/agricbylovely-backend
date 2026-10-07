@@ -1,7 +1,7 @@
 import express from 'express'
 import cors from 'cors'
 import helmet from 'helmet'
-import rateLimit from 'express-rate-limit'
+import { apiLimiter } from './middleware/apiLimit.js'
 import { env } from './config/env.js'
 import router from './routes/routes.js'
 import { notFound, errorHandler } from './middleware/errorHandler.js'
@@ -24,16 +24,7 @@ app.use(cors({
 app.set('trust proxy', 1)
 
 
-app.use(rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max:      200,
-  message: {
-    success: false,
-    message: 'Too many requests, please try again later.',
-  },
-  standardHeaders: true,
-  legacyHeaders:   false,
-}))
+app.use(apiLimiter)
 
 
 app.use(express.json({ limit: '10mb' }))
