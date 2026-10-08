@@ -16,6 +16,8 @@ const envSchema = z.object({
   SMTP_USER: z.string().optional(),
   SMTP_PASS: z.string().optional(),
   EMAIL_FROM: z.string().optional(),
+  BREVO_API_KEY: z.string().optional(),
+  RESEND_API_KEY: z.string().optional(),
   OPENWEATHER_API_KEY: z.string().optional(),
   SCHEDULED_EMAILS_ENABLED: z.enum(['true', 'false']).default('false'),
   PERENUAL_API_KEY: z.string().optional(),

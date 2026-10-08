@@ -1,6 +1,8 @@
 import { Router } from 'express'
 import prisma from '../config/prisma.js'
 import { authenticate } from '../middleware/auth.js'
+import { env } from '../config/env.js'
+import { authLimiter } from '../middleware/security.js'
 import { success, fail } from '../utils/response.js'
 import {
     sendWelcomeEmail,
@@ -13,6 +15,8 @@ const router = Router()
 
 
 router.use(authenticate)
+// Sample email routes are development tools, not production sending endpoints.
+router.use('/test', (req, res, next) => env.NODE_ENV === 'development' ? next() : res.status(404).json(fail('Route not found')), authLimiter)
 
 // ── Test welcome email ────────────────────
 router.post('/test/welcome', async (req, res, next) => {
@@ -21,7 +25,7 @@ router.post('/test/welcome', async (req, res, next) => {
             where: { id: req.farmer.id }
         })
         const sent = await sendWelcomeEmail(farmer)
-        if (!sent) return res.status(500).json(fail('Email failed to send — check your SMTP settings'))
+        if (!sent) return res.status(500).json(fail('Email failed to send — check your HTTPS email provider settings'))
         res.json(success({}, `Welcome email sent to ${farmer.email}`))
     } catch (err) { next(err) }
 })

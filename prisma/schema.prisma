@@ -49,6 +49,7 @@ model Field {
   soilType   SoilType @default(LOAMY)
   latitude   Float?
   longitude  Float?
+  photoUrl   String?
   notes      String?  // any extra info the farmer wants to add
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
@@ -106,6 +107,7 @@ model FarmerCrop {
   expectedHarvestAt DateTime? // calculated from plantedAt + crop.daysToHarvest
   harvestedAt   DateTime?   // set when farmer marks it as harvested
   stage         GrowthStage @default(GERMINATING)
+  photoUrl      String?
   notes         String?     // farmer's own notes on this crop
   quantity      Float?      // amount planted e.g. 2 bags of seed
   yieldKg       Float?      // recorded yield after harvest

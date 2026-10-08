@@ -20,7 +20,7 @@ Keep the existing local `.env` unchanged for development. Do not run `db:reset` 
 
 Add the appropriate OpenWeather, Perenual, Anthropic, and Cloudinary keys in Render's environment settings to enable their corresponding features. Keep these credentials on the backend.
 
-Outbound SMTP is blocked on Render's free service. The current email service uses SMTP and must be adapted to an HTTPS email API before welcome and password-reset emails will work online. Do not configure SMTP credentials as a substitute for this adaptation.
+Email now uses an HTTPS API: configure `BREVO_API_KEY` (or `RESEND_API_KEY`) and `EMAIL_FROM` for a verified sender. SMTP variables are no longer used. See EMAIL-PHOTOS.md for provider setup, reset testing and photo requirements. Scheduled email remains disabled by default.
 
 ## Free-tier behavior
 

@@ -116,8 +116,8 @@ export const forgotPasswordSchema = z.object({
 
 export const resetPasswordSchema = z.object({
   body: z.object({
-    token:       z.string().min(1, 'Reset token is required'),
-    newPassword: z.string().min(8, 'Password must be at least 8 characters'),
+    token:       z.string().regex(/^[a-f0-9]{64}$/, 'Invalid reset token'),
+    newPassword: z.string().min(8, 'Password must be at least 8 characters').max(100),
   }),
 })
 

@@ -1,64 +1,18 @@
-import nodemailer from 'nodemailer'
+import { deliverEmail, escapeHtml } from './emailDelivery.js'
 import prisma from '../config/prisma.js'
 import { env } from '../config/env.js'
 
 
 
-const transporter = nodemailer.createTransport({
-    host: env.SMTP_HOST,
-    port: parseInt(env.SMTP_PORT),
-    secure: true, 
-    auth: {
-        user: env.SMTP_USER,
-        pass: env.SMTP_PASS,
-    },
-})
-
-
-// Sends any email and logs it to the database
 const sendEmail = async ({ to, subject, html, farmerId = null, template }) => {
-    try {
-        await transporter.sendMail({
-            from: `AgricbyLovely <${env.EMAIL_FROM}>`,
-            to,
-            subject,
-            html,
-        })
-
-        // Log successful send to database
-        await prisma.emailLog.create({
-            data: {
-                to,
-                subject,
-                template,
-                status: 'sent',
-                farmerId: farmerId || null,
-            },
-        })
-
-        console.log(`Email sent: "${subject}" to ${to}`)
-        return true
-
-    } catch (err) {
-        console.error(`Email failed: "${subject}" to ${to} —`, err.message)
-
-        // Log failed send so we know what to retry
-        await prisma.emailLog.create({
-            data: {
-                to,
-                subject,
-                template,
-                status: 'failed',
-                error: err.message,
-                farmerId: farmerId || null,
-            },
-        })
-
-        return false
-    }
+    let status = 'sent', error = null
+    try { await deliverEmail({ to, subject, html }) }
+    catch (err) { status = 'failed'; error = err.message; console.error('Email delivery failed:', error) }
+    // Logging failure must never turn an accepted message into a failed send.
+    try { await prisma.emailLog.create({ data: { to, subject, template, status, error, farmerId } }) }
+    catch { console.error('Unable to record email delivery log') }
+    return status === 'sent'
 }
-
-
 
 // Brand colors and shared styles
 const styles = `
@@ -95,10 +49,10 @@ const welcomeTemplate = (farmer) => ({
         <p>Smart Farming Intelligence for Nigerian Farmers</p>
       </div>
       <div class="body">
-        <h2>Welcome, ${farmer.firstName}!</h2>
+        <h2>Welcome, ${escapeHtml(farmer.firstName)}!</h2>
         <p>Your account has been created successfully. You now have access to everything AgricbyLovely has to offer:</p>
         <div class="highlight">
-          <p>Farm: ${farmer.farmName}</p>
+          <p>Farm: ${escapeHtml(farmer.farmName)}</p>
         </div>
         <p>Here is what you can do right now:</p>
         <p>
@@ -123,8 +77,8 @@ const welcomeTemplate = (farmer) => ({
 const weatherAlertTemplate = (farmer, alerts) => {
     const alertCards = alerts.map(alert => `
     <div class="alert-card alert-${alert.type.toLowerCase()}">
-      <p class="alert-title">${alert.title}</p>
-      <p class="alert-msg">${alert.message}</p>
+      <p class="alert-title">${escapeHtml(alert.title)}</p>
+      <p class="alert-msg">${escapeHtml(alert.message)}</p>
     </div>
   `).join('')
 
@@ -138,14 +92,14 @@ const weatherAlertTemplate = (farmer, alerts) => {
           <p>Weather Alert for Your Farm</p>
         </div>
         <div class="body">
-          <h2>Hi ${farmer.firstName}, your farm needs attention</h2>
+          <h2>Hi ${escapeHtml(farmer.firstName)}, your farm needs attention</h2>
           <p>We have detected weather conditions that may affect your crops. Please review the alerts below and take action:</p>
           ${alertCards}
           <a href="${env.CLIENT_URL}/weather" class="btn">View Full Forecast</a>
           <p>Stay safe and protect your harvest.</p>
         </div>
         <div class="footer">
-          <p>AgricbyLovely — Smart Farming Intelligence<br>To stop receiving weather alerts, update your notification preferences in the app.</p>
+          <p>AgricbyLovely — Smart Farming Intelligence<br>Check the Weather page for current advisories.</p>
         </div>
       </div></body></html>
     `,
@@ -157,11 +111,11 @@ const weatherAlertTemplate = (farmer, alerts) => {
 const harvestReminderTemplate = (farmer, crops) => {
     const cropRows = crops.map(c => `
     <div class="alert-card alert-harvest">
-      <p class="alert-title">${c.cropName} ${c.fieldName ? `— ${c.fieldName}` : ''}</p>
+      <p class="alert-title">${escapeHtml(c.cropName)} ${c.fieldName ? `— ${escapeHtml(c.fieldName)}` : ''}</p>
       <p class="alert-msg">
-        ${c.daysLeft === 0 ? 'Ready to harvest TODAY' :
-            c.daysLeft === 1 ? 'Ready to harvest TOMORROW' :
-                `Ready to harvest in ${c.daysLeft} days — ${c.date}`}
+        ${c.daysLeft === 0 ? 'Estimated harvest is today' :
+            c.daysLeft === 1 ? 'Estimated harvest is tomorrow' :
+                `Estimated harvest in ${c.daysLeft} days — ${escapeHtml(c.date)}`}
       </p>
     </div>
   `).join('')
@@ -176,7 +130,7 @@ const harvestReminderTemplate = (farmer, crops) => {
           <p>Harvest Reminder</p>
         </div>
         <div class="body">
-          <h2>Hi ${farmer.firstName}, harvest time is approaching!</h2>
+          <h2>Hi ${escapeHtml(farmer.firstName)}, harvest time is approaching!</h2>
           <p>The following crops on your farm are due for harvest soon. Prepare your tools and storage facilities:</p>
           ${cropRows}
           <a href="${env.CLIENT_URL}/calendar" class="btn">View Planting Calendar</a>
@@ -195,7 +149,7 @@ const harvestReminderTemplate = (farmer, crops) => {
 const weeklyDigestTemplate = (farmer, data) => {
     const cropRows = data.activeCrops.slice(0, 5).map(fc => `
     <div class="alert-card">
-      <p class="alert-title">${fc.crop.name} ${fc.field ? `— ${fc.field.name}` : ''}</p>
+      <p class="alert-title">${escapeHtml(fc.crop.name)} ${fc.field ? `— ${escapeHtml(fc.field.name)}` : ''}</p>
       <p class="alert-msg">Stage: ${fc.stage} ${fc.expectedHarvestAt ?
             `• Harvest: ${new Date(fc.expectedHarvestAt).toLocaleDateString('en-NG', { day: 'numeric', month: 'short' })}` : ''
         }</p>
@@ -212,8 +166,8 @@ const weeklyDigestTemplate = (farmer, data) => {
           <p>Weekly Farm Summary</p>
         </div>
         <div class="body">
-          <h2>Good morning, ${farmer.firstName}!</h2>
-          <p>Here is your weekly summary for <strong>${farmer.farmName}</strong>:</p>
+          <h2>Good morning, ${escapeHtml(farmer.firstName)}!</h2>
+          <p>Here is your weekly summary for <strong>${escapeHtml(farmer.farmName)}</strong>:</p>
           <div class="highlight">
             <p>
               Active crops: ${data.activeCrops.length} &nbsp;|&nbsp;
@@ -298,14 +252,14 @@ const resetPasswordTemplate = (farmer, resetUrl) => ({
         <p>Password Reset Request</p>
       </div>
       <div class="body">
-        <h2>Hi ${farmer.firstName},</h2>
+        <h2>Hi ${escapeHtml(farmer.firstName)},</h2>
         <p>We received a request to reset your password. Click the button below to set a new password:</p>
-        <a href="${resetUrl}" class="btn">Reset My Password</a>
+        <a href="${escapeHtml(resetUrl)}" class="btn">Reset My Password</a>
         <div class="highlight">
           <p>This link expires in 1 hour. If you did not request a password reset, ignore this email — your account is safe.</p>
         </div>
         <p>If the button does not work, copy and paste this link into your browser:</p>
-        <p style="word-break:break-all;font-size:13px;color:#639922;">${resetUrl}</p>
+        <p style="word-break:break-all;font-size:13px;color:#639922;">${escapeHtml(resetUrl)}</p>
       </div>
       <div class="footer">
         <p>AgricbyLovely — Smart Farming Intelligence</p>

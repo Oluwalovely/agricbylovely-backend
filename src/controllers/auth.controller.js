@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken'
 import crypto from 'crypto'
 import prisma from '../config/prisma.js'
 import { env } from '../config/env.js'
+import { emailConfigured } from '../services/emailDelivery.js'
 import { success, fail } from '../utils/response.js'
 import { sendWelcomeEmail, sendPasswordResetEmail } from '../services/email.service.js'
 
@@ -157,6 +158,7 @@ const logout = async (req, res, next) => {
 
 const forgotPassword = async (req, res, next) => {
     try {
+        if (!emailConfigured()) return res.status(503).json(fail('Password recovery is temporarily unavailable. Please try again later.'))
         const { email } = req.body
 
         const farmer = await prisma.farmer.findUnique({ where: { email } })
@@ -164,7 +166,7 @@ const forgotPassword = async (req, res, next) => {
         
         if (!farmer) {
             return res.json(success({},
-                'If an account with that email exists, a reset link has been sent.'
+                'If an account with that email exists, a reset has been requested. Check your inbox and spam folder; if no link arrives, try again later.'
             ))
         }
 
@@ -178,21 +180,26 @@ const forgotPassword = async (req, res, next) => {
         await prisma.farmer.update({
             where: { id: farmer.id },
             data: {
-                passwordResetToken: resetToken,
+                passwordResetToken: crypto.createHash('sha256').update(resetToken).digest('hex'),
                 passwordResetExpiry: resetExpiry,
             },
         })
 
         
-        const resetUrl = `${env.CLIENT_URL}/reset-password?token=${resetToken}`
+        const resetUrl = new URL('/reset-password', env.CLIENT_URL)
+        resetUrl.searchParams.set('token', resetToken)
 
         
-        await sendPasswordResetEmail(farmer, resetUrl)
+        const sent = await sendPasswordResetEmail(farmer, resetUrl.toString())
+        if (!sent) await prisma.farmer.updateMany({
+            where: { id: farmer.id, passwordResetToken: crypto.createHash('sha256').update(resetToken).digest('hex') },
+            data: { passwordResetToken: null, passwordResetExpiry: null },
+        })
 
-        console.log(`Password reset email sent to ${farmer.email}`)
+        // A generic acknowledgement avoids exposing whether the account exists.
 
         res.json(success({},
-            'If an account with that email exists, a reset link has been sent.'
+            'If an account with that email exists, a reset has been requested. Check your inbox and spam folder; if no link arrives, try again later.'
         ))
     } catch (err) {
         next(err)
@@ -211,7 +218,7 @@ const resetPassword = async (req, res, next) => {
         
         const farmer = await prisma.farmer.findFirst({
             where: {
-                passwordResetToken: token,
+                passwordResetToken: crypto.createHash('sha256').update(token).digest('hex'),
                 passwordResetExpiry: { gt: new Date() }, 
             },
         })
@@ -226,8 +233,8 @@ const resetPassword = async (req, res, next) => {
         const hashedPassword = await bcrypt.hash(newPassword, 12)
 
         
-        await prisma.farmer.update({
-            where: { id: farmer.id },
+        const changed = await prisma.farmer.updateMany({
+            where: { id: farmer.id, passwordResetToken: farmer.passwordResetToken, passwordResetExpiry: { gt: new Date() } },
             data: {
                 password: hashedPassword,
                 passwordResetToken: null, 
@@ -236,7 +243,7 @@ const resetPassword = async (req, res, next) => {
             },
         })
 
-        console.log(`Password reset successful for ${farmer.email}`)
+        if (!changed.count) return res.status(400).json(fail('This reset link is invalid or has expired. Please request a new one.'))
 
         res.json(success({},
             'Password reset successfully. Please login with your new password.'
